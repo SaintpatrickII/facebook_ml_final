@@ -131,5 +131,24 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 <img width="895" alt="Screenshot 2022-08-08 at 13 22 13" src="https://user-images.githubusercontent.com/92804317/183417366-606559c0-a356-413b-bb37-7e9022c790e2.png">
 
+6. Combining models:
+
+- Alike before a dataloader is utilised which completes. the appropriate transformations to both text & images, in this model however we also add an encoder & decoder to the loader, this will translate the class number to its string category name
+
+- Model architecture stays largely the same with one important change, before the final linear layers == no. of classes, now we wat the final layers of each to both == 128, after combining both models one final linear layer is utilised to equate the final output to the number of classes
+
+- Model is trained & state.dict is saved alongside the decoder to be used later within our API
+
+- From images below it is clear that by combining models we get an increased rate of learning within the model
+
+
+
+7. Configure & deploy API call for model:
+
+- API is setup utilising FastAPI, firstly on localhost for ease of testing a .post method is setup using uvicorn to update the localhost whenever the api.py file is ran
+
+- Two external dataloaders are needed as now we will be feeding the model a singular image & text input, so modified loaders are used to account for this instead of the batches previously used, for images we need to add a dimension for the 'batch size' & thetext now only tokenizes a single description rather than a list of descriptions
+
+- Combined model is imported & the forward method is called by the API .post method, this will ask for user input of image & text & load->predict said imputs. a JSONResponse is used to give an output of predictions 
 
 
