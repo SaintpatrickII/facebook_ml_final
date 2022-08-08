@@ -60,6 +60,10 @@ image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
 # %%
 
 def get_default_device():
+    """
+    It checks if GPU is available and returns the device accordingly.
+    :return: The device is being returned.
+    """
     """Picking GPU if available or else CPU"""
     if torch.cuda.is_available():
         return torch.device('cuda')
@@ -72,6 +76,14 @@ device = get_default_device()
 
 class TextClassifier(torch.nn.Module):
     def __init__(self, pretrained_weights=None):
+        """
+        We create an embedding layer with 28381 words and 50 dimensions, then we create a sequential
+        model with a convolutional layer with 32 filters, a ReLU activation, a convolutional layer with
+        64 filters, a dropout layer, a ReLU activation, a flatten layer, and a linear layer with 128
+        neurons
+        
+        :param pretrained_weights: This is the path to the pretrained weights
+        """
         super().__init__()
         no_words = 28381
         embedding_size = 50
@@ -86,13 +98,6 @@ class TextClassifier(torch.nn.Module):
             torch.nn.Linear(3072, 128)
         )
 
-
-    '''
-    TextClassifier Initiliser:
-
-    We have an embedding layer, which is a matrix of size 26888x100, which is the size of our
-    vocabulary. from here a TextClassifier is built using dropout & ReLU to avoid overfitting
-    '''
 
     def forward(self, X):
         
@@ -111,6 +116,10 @@ class TextClassifier(torch.nn.Module):
 
 class ImageTextClassifier(nn.Module):
     def __init__(self):
+        """
+        We're taking the pretrained resnet50 model, freezing the first 47 layers, and then adding a new
+        fully connected layer to the end of the model
+        """
         super(ImageTextClassifier, self).__init__()
         self.features = models.resnet50(pretrained=True).to(device)
         self.text_model = TextClassifier()
@@ -133,16 +142,19 @@ class ImageTextClassifier(nn.Module):
 
 
     def forward(self, image_features, text_features):
+        """
+        We take the image features, pass them through the image model, flatten them, pass the text
+        features through the text model, concatenate the two, and pass the result through the main model
+        
+        :param image_features: The output of the image model
+        :param text_features: The text features that we extracted from the text
+        :return: The combined features of the image and text features.
+        """
         image_features = self.features(image_features)
         image_features = image_features.reshape(image_features.shape[0], -1)
         text_features = self.text_model(text_features)
         combined_features = torch.cat((image_features, text_features), 1)
         combined_features = self.main(combined_features)
-        # combined_features = self.main(combined_features)
-
-
-
-        # x = torch.nn.Softmax(dim=1)(x)
         return combined_features
 
  
@@ -157,6 +169,13 @@ dataloader = dataloader = torch.utils.data.DataLoader(dataset, batch_size=32 ,sh
 
 
 def train_model(model, epochs):
+    """
+    We are training the model by iterating through the dataloader, and for each batch we are calculating
+    the loss and accuracy, and then updating the model parameters
+    
+    :param model: the model we want to train
+    :param epochs: number of epochs to train for
+    """
 # optimiser):
 # scheduler
     writer = SummaryWriter()
@@ -200,6 +219,19 @@ def train_model(model, epochs):
 
 
 def check_accuracy(loader, model):
+    """
+    We iterate through the training set, and for each image and text pair, we pass it through the model
+    and get a prediction. 
+    
+    We then compare the prediction to the actual label, and if they match, we increment the number of
+    correct predictions. 
+    
+    At the end, we calculate the accuracy by dividing the number of correct predictions by the total
+    number of predictions
+    
+    :param loader: the data loader
+    :param model: The model to train
+    """
     model.eval()
     print('Checking accuracy on training set')
     num_correct = 0

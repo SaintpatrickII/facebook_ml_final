@@ -30,11 +30,33 @@ batch_size = 32
 class ImageTextDataloader(torch.utils.data.Dataset):
 
     def __init__(self, transform: transforms = None, labels_level : int=0, max_desc_len = 50):
+        
+        """
+        The function takes in a dataframe of products, a folder of images, a transform, a labels_level
+        (which is the level of the category tree you want to use), and a max_desc_len (which is the
+        maximum length of the description you want to use). 
+        
+        The function then creates a list of labels, a list of descriptions, a list of image_ids, and a
+        number of classes. 
+        
+        It then creates an encoder and decoder for the labels. 
+        
+        It then creates a transform if one is not provided. 
+        
+        It then creates a tokenizer and a vocabulary.
+        
+        :param transform: This is the transformation that will be applied to the image
+        :type transform: transforms
+        :param labels_level: This is the level of the labels you want to use. For example, if you want
+        to use the top level labels, you would set this to 0. If you want to use the second level
+        labels, you would set this to 1, defaults to 0
+        :type labels_level: int (optional)
+        :param max_desc_len: The maximum length of the description. If the description is longer than
+        this, it will be truncated, defaults to 50 (optional)
+        """
         self.products = pd.read_csv(products_df, lineterminator='\n')
         self.root_dir = image_folder
         self.transform = transform
-
-
         self.max_desc_len = max_desc_len
         self.products['category'] = self.products['category'].apply(lambda x: self.get_category(x, labels_level))
         self.descriptions = self.products['product_description']
@@ -61,12 +83,16 @@ class ImageTextDataloader(torch.utils.data.Dataset):
 
         self.tokenizer = get_tokenizer('basic_english')
         self.vocab = self.get_vocab()
-        # self.descriptions = self.tokenize_descriptions(self.descriptions)
-
         assert len(self.descriptions) == len(self.labels) == len(self.image_id)
     
 
     def get_vocab(self):
+        
+        """
+        We use the tokenizer to tokenize each description in the dataset, and then we use the
+        build_vocab_from_iterator function to build the vocabulary from the tokenized descriptions
+        :return: A dictionary of the words in the vocab and their index.
+        """
 
         def yield_tokens():
             for description in self.descriptions:
@@ -80,6 +106,13 @@ class ImageTextDataloader(torch.utils.data.Dataset):
 
 
     def tokenize_descriptions(self, descriptions):
+        
+        """
+        The function takes in a list of descriptions, and returns a list of tokenized descriptions
+        
+        :param descriptions: a pandas series of descriptions
+        :return: A list of tokenized descriptions
+        """
         def tokenize_description(description):
             words = self.tokenizer(description)
             words = words[:50]
@@ -95,10 +128,21 @@ class ImageTextDataloader(torch.utils.data.Dataset):
 
 
     def __len__(self):
+        """
+        The function returns the length of the products list
+        :return: The length of the products list.
+        """
         return len(self.products)
 
 
     def __getitem__(self, index):
+        """
+        The function takes in an index, and returns the image, description, and label of the product at
+        that index
+        
+        :param index: the index of the image in the dataset
+        :return: The image, the description, and the label.
+        """
         label = self.labels[index]
         label = self.encoder[label]
         label = torch.as_tensor(label)

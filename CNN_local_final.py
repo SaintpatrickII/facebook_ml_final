@@ -22,15 +22,42 @@ import torchvision.transforms as transforms
 
 class ImagesLoader(Dataset):
     def __init__(self, json_file='/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/image_data.json', root_dir='/Users/paddy/Desktop/AiCore/facebook_ml/Images', transform=None):
+        
+        """
+        The function takes in a json file, a root directory and a transform function. It then reads the
+        json file and assigns it to a variable called read_json. It then assigns the root directory to a
+        variable called root_dir. It then assigns the transform function to a variable called transform.
+        It then asserts that the length of the first element of the json file is equal to the length of
+        the second element of the json file.
+        
+        :param json_file: The path to the json file that contains the image names and labels, defaults
+        to /Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/image_data.json (optional)
+        :param root_dir: The directory where the images are stored, defaults to
+        /Users/paddy/Desktop/AiCore/facebook_ml/Images (optional)
+        :param transform: This is the transformation that we want to apply to the image
+        """
         self.read_json = pd.read_json(json_file)
         self.root_dir = root_dir
         self.transform = transform
         assert len(json_file[0]) == len(json_file[1])
 
+
     def __len__(self):
+        """
+        The function returns the length of the read_json variable
+        :return: The length of the read_json file.
+        """
         return len(self.read_json)
 
+
     def __getitem__(self, index):
+        """
+        The function takes in an index, and returns a tuple of the image and the label
+        
+        :param index: the index of the image in the dataset
+        :return: The image and the label
+        """
+
         img_path = os.path.join(self.root_dir, self.read_json.iloc[index, 0])
         features = io.imread(f'{img_path}.jpg')
         features = torch.tensor(features).float()
@@ -85,6 +112,10 @@ test_samples = DataLoader(test_data, batch_size=batch_size)
 
 class CNN(nn.Module):
     def __init__(self):
+        """
+        We're taking the pretrained ResNet50 model, freezing the first 47 layers, and then adding a few
+        more layers to the end of the model
+        """
         super(CNN, self).__init__()
         self.features = models.resnet50(pretrained=True).to(device)
         for i, param in enumerate(self.features.parameters()):
@@ -105,12 +136,23 @@ class CNN(nn.Module):
 
 
     def forward(self, x):
+        """
+        It takes in an image, applies the convolutional layers, and then flattens the output of the
+        convolutional layers into a vector
+        
+        :param x: the input to the model
+        :return: The output of the forward pass of the model.
+        """
         x = self.features(x)
         x = x.reshape(x.shape[0], -1)
         return x
 
 
 def get_default_device():
+    """
+    It returns the device object representing the default device type
+    :return: The device object
+    """
     """Picking GPU if available or else CPU"""
     if torch.cuda.is_available():
         return torch.device('cuda')
@@ -124,6 +166,14 @@ model.to(device)
 
 
 def train_model(model, epochs):
+    """
+    We train the model for a number of epochs, and for each epoch we iterate through the training and
+    validation samples, and for each sample we calculate the loss and accuracy, and then we update the
+    model parameters
+    
+    :param model: the model we want to train
+    :param epochs: number of epochs to train for
+    """
     writer = SummaryWriter()
     model.train()
     print('training model')
@@ -173,6 +223,13 @@ train_model(model, 50)
 
 
 def check_accuracy(loader, model):
+    """
+    The function takes in a data loader and a model, and checks the accuracy of the model on the data in
+    the loader
+    
+    :param loader: the data loader
+    :param model: A PyTorch Module giving the model to train
+    """
     model.eval()
     if loader == train_samples:
         # model.train()

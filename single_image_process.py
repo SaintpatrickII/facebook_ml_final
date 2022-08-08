@@ -4,6 +4,10 @@ from torchvision  import transforms
 
 class ImageProcessor:
     def __init__(self):
+        """
+        The function takes in an image, resizes it to 128x128, crops it to 128x128, flips it
+        horizontally with a probability of 0.3, converts it to a tensor, and normalizes it
+        """
         self.transform = transforms.Compose([
                 transforms.Resize(128),
                 transforms.CenterCrop(128),
@@ -24,10 +28,18 @@ class ImageProcessor:
         ])
 
     @staticmethod
+    
     def repeat_channel(x):
             return x.repeat(3, 1, 1)
 
     def __call__(self, image):
+        """
+        It takes an image, checks if it's in RGB mode, and if it is, it transforms it to grayscale. If
+        it's already in grayscale, it just transforms it
+        
+        :param image: The image to be transformed
+        :return: A numpy array of the image with a dimension added to the front.
+        """
         if image.mode != 'RGB':
             image = self.transform_Gray(image)
         else:
