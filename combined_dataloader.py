@@ -103,28 +103,10 @@ class ImageTextDataloader(torch.utils.data.Dataset):
         label = self.encoder[label]
         label = torch.as_tensor(label)
         image = Image.open(self.root_dir + (self.products.iloc[index, 1] + '.jpg')).convert('RGB')
-<<<<<<< HEAD
         image = self.transform(image)
         sentence = self.descriptions[index]
         encoded = self.tokenize_descriptions(sentence)
         description = encoded
-=======
-        # print(image)
-        image = self.transform(image)
-        # print('this is image', image)
-        sentence = self.descriptions[index]
-        # print(sentence)
-        encoded = self.tokenize_descriptions(sentence)
-        # print(encoded)
-        description = encoded
-        # encoded = self.tokenize_descriptions(sentence)
-        # encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
-        # with torch.no_grad():
-        #     description = self.model(**encoded).last_hidden_state.swapaxes(1,2)
-
-        # description = description.squeeze(0)
-        # return (image, label)
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
         return image, description, label
 
 

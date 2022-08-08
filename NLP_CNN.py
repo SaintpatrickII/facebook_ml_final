@@ -1,18 +1,8 @@
 #%%
-<<<<<<< HEAD
 from torch.utils.data.sampler import SubsetRandomSampler
 import pandas as pd
 import numpy as np
 import torch
-=======
-from turtle import forward
-from unicodedata import category
-import pandas as pd
-import numpy as np
-from sqlalchemy import desc
-import torch
-import torchtext
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from torch.utils.data import DataLoader, Dataset
@@ -21,7 +11,6 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 
 
-<<<<<<< HEAD
 products = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
 
 df =  pd.read_csv(products)
@@ -45,24 +34,6 @@ class productsPreProcessing(Dataset):
         self.descriptions = self.tokenize_descriptions(self.descriptions)
         
         
-=======
-products = '/Users/paddy/Desktop/AiCore/facebook_ml/description_for_embedding.pkl'
-
-df =  pd.read_pickle(products)
-df.head
-
-class productsPreProcessing(Dataset):
-    def __init__(self):
-        
-        super().__init__()
-        df =  pd.read_pickle(products)
-        self.descriptions = df['product_description']
-        self.categories = df['category']
-        self.max_seq_len = 100
-        self.tokenizer = get_tokenizer('basic_english')
-        self.vocab = self.get_vocab()
-        self.descriptions = self.tokenize_descriptions(self.descriptions)
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
     
 
     """
@@ -121,13 +92,10 @@ class productsPreProcessing(Dataset):
     """
 
 
-<<<<<<< HEAD
     @staticmethod
     def get_category(x, level: int = 0):
         return x.split('/')[level].strip()
 
-=======
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
     def __len__(self):
         return len(self.descriptions)
 
@@ -140,16 +108,10 @@ class productsPreProcessing(Dataset):
 
 
     def __getitem__(self, idx):
-<<<<<<< HEAD
         description = self.descriptions[idx]
         label = self.labels[idx]
         label = self.encoder[label]
         return (description, label)
-=======
-        description = self.descriptions.iloc[idx]
-        category = self.categories.iloc[idx]
-        return (description, category)
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 
     '''
     __getitem__:
@@ -159,7 +121,6 @@ class productsPreProcessing(Dataset):
 
 
 dataset = productsPreProcessing()
-<<<<<<< HEAD
 
 print(dataset[0], dataset.decoder[dataset[0][1]])
 
@@ -169,16 +130,6 @@ class CNN(torch.nn.Module):
     def __init__(self, pretrained_weights=None):
         super().__init__()
         no_words = 28381
-=======
-print(dataset[2])
-
-
-
-class CNN(torch.nn.Module):
-    def __init__(self, pretrained_weights=None):
-        super().__init__()
-        no_words = 26888
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
         embedding_size = 100
         self.embedding = torch.nn.Embedding(no_words, embedding_size)
         self.layers = torch.nn.Sequential(
@@ -217,7 +168,6 @@ class CNN(torch.nn.Module):
 cnn = CNN()
 
 
-<<<<<<< HEAD
 
 validation_split = 0.15
 batch_size = 32
@@ -241,24 +191,6 @@ train_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                            sampler=train_sampler)
 val_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                                 sampler=valid_sampler)
-=======
-train_split = 0.7
-validation_split = 0.15
-batch_size = 32
-
-data_size = len(dataset)
-print(f'dataset contains {data_size} Images')
-
-train_size = int(train_split * data_size)
-val_size = int(validation_split * data_size)
-test_size = data_size - (val_size + train_size)
-train_data, val_data, test_data = torch.utils.data.random_split(dataset, [train_size, val_size, test_size])
-
-train_samples = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-val_samples = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-test_samples = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 '''
 Data Splitter:
 
@@ -274,23 +206,16 @@ def train_model(model, epochs):
         for phase in [train_samples, val_samples]:
             if phase == train_samples:
                 print('training')
-<<<<<<< HEAD
                 model.train()
             else:
                 model.eval()
-=======
-            else:
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
                 print('val')
             for i, (features, labels) in enumerate(phase):
                 if phase == 'train':
                     torch.set_grad_enabled(phase)
                 num_correct = 0
                 num_samples = 0 
-<<<<<<< HEAD
                 # print(features)
-=======
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
                 predict = model(features)
                 labels = labels
                 loss = F.cross_entropy(predict, labels)
@@ -333,11 +258,7 @@ def train_model(model, epochs):
     :param epochs: number of times to iterate over the entire dataset
     """
 
-<<<<<<< HEAD
 train_model(cnn, 50)
-=======
-train_model(cnn, 100)
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 
 
 def check_accuracy(loader, model):
@@ -376,7 +297,6 @@ check_accuracy(val_samples, cnn)
 
 
 
-<<<<<<< HEAD
 def save_model():
     model_save_name = 'cnn_Word2Vec.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
@@ -391,6 +311,4 @@ saves current models parameters & weights for
 further usage & testing
 '''
 
-=======
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 #%%

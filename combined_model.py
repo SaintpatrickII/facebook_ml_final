@@ -31,10 +31,6 @@ products_df = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_fi
 image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
 
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
 # validation_split = 0.15
 # batch_size = 32
 # shuffle_dataset = True
@@ -59,10 +55,6 @@ image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
 #                                            sampler=train_sampler)
 # val_samples = torch.utils.data.DataLoader(ImageTextDataloader, batch_size=batch_size,
 #                                                 sampler=valid_sampler)
-
-
->>>>>>> 7bc87a140c00ea2e8ae7b6e8a77233468cd39b18
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 
 
 # %%
@@ -145,10 +137,7 @@ class ImageTextClassifier(nn.Module):
         image_features = image_features.reshape(image_features.shape[0], -1)
         text_features = self.text_model(text_features)
         combined_features = torch.cat((image_features, text_features), 1)
-<<<<<<< HEAD
         combined_features = self.main(combined_features)
-=======
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
 
 
 
@@ -197,11 +186,7 @@ def train_model(model, epochs):
             optimiser.zero_grad()
 
 
-<<<<<<< HEAD
             if i % 130 == 129:
-=======
-            if i % 10 == 9:
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
                 writer.add_scalar('Training Loss', loss, epoch)
                 writer.add_scalar(' Training Accuracy', acc, epoch)
                 print('training_loss')
@@ -231,7 +216,7 @@ def check_accuracy(loader, model):
         print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
         
 
-<<<<<<< HEAD
+
     model_save_name = 'combined_final.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
     torch.save(model.state_dict(), path)
@@ -240,7 +225,7 @@ def check_accuracy(loader, model):
                     
 if __name__ == '__main__':
     train_model(model, 20)
-=======
+
     model_save_name = 'combined.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
     torch.save(model.state_dict(), path)
@@ -248,12 +233,7 @@ if __name__ == '__main__':
         pickle.dump(dataset.decoder, f)
                     
 if __name__ == '__main__':
-<<<<<<< HEAD
     train_model(model, 10)
-=======
-    train_model(model, 50)
->>>>>>> 7bc87a140c00ea2e8ae7b6e8a77233468cd39b18
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
     # optimiser_ft)
     check_accuracy(dataloader, model)
     # model_save_name = 'combined.pt'

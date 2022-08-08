@@ -79,18 +79,18 @@ class TextProcessor(torch.utils.data.Dataset):
     def get_category(x, level: int = 0):
         return x.split('/')[level].strip()
 
-<<<<<<< HEAD
+
 if __name__ == '__main__':
     text_test = TextProcessor()
     var = text_test('big ole shelf, sdc, frvdf, erfsdc, efvsdc, qdfergv')
     print(var)
     print(var.size)
-=======
 
-text_test = TextProcessor()
-var = text_test('big ole shelf, sdc, frvdf, erfsdc, efvsdc, qdfergv')
-print(var)
-print(var.size)
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
+
+# text_test = TextProcessor()
+# var = text_test('big ole shelf, sdc, frvdf, erfsdc, efvsdc, qdfergv')
+# print(var)
+# print(var.size)
+
 
 # %%
