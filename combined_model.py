@@ -219,7 +219,7 @@ def check_accuracy(loader, model):
 
 
     model_save_name = 'combined_final.pt'
-    path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
+    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(model.state_dict(), path)
     with open('combined_decoder_final.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     train_model(model, 20)
 
     model_save_name = 'combined.pt'
-    path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
+    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(model.state_dict(), path)
     with open('combined_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
