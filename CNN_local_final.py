@@ -206,7 +206,6 @@ check_accuracy(val_samples, model)
 model_save_name = 'cnn.pt'
 path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
 torch.save(model.state_dict(), path)
-<<<<<<< HEAD
 
 
 
@@ -267,5 +266,3 @@ print(var.shape)
 
 
 # %%
-=======
->>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
