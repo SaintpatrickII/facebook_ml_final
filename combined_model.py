@@ -138,6 +138,7 @@ class ImageTextClassifier(nn.Module):
         text_features = self.text_model(text_features)
         combined_features = torch.cat((image_features, text_features), 1)
         combined_features = self.main(combined_features)
+        # combined_features = self.main(combined_features)
 
 
 
