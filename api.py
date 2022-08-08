@@ -68,17 +68,19 @@ class CNN(nn.Module):
             torch.nn.Dropout(),
             torch.nn.Linear(1024, 512),
             torch.nn.ReLU(),
-            torch.nn.Linear(512, 128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, 13)
+            torch.nn.Linear(512, 128)
+            # torch.nn.ReLU(),
+            # torch.nn.Linear(128, 13)
             )
         self.decoder = decoder
+        self.main = nn.Sequential(nn.Linear(256, num_classes))
 
     def forward(self, image_features, text_features):
         image_features = self.features(image_features)
         image_features = image_features.reshape(image_features.shape[0], -1)
         text_features = self.text_model(text_features)
         combined_features = torch.cat((image_features, text_features), 1)
+        combined_features = self.main(combined_features)
         return combined_features
 
 
