@@ -1,0 +1,96 @@
+# %%
+from torch.utils.data.sampler import SubsetRandomSampler
+# import pandas as pd
+import numpy as np
+import torch
+from torchtext.data.utils import get_tokenizer
+from torchtext.vocab import build_vocab_from_iterator
+from torch.utils.data import DataLoader, Dataset
+import torch.nn.functional as F
+import torch
+from torch import Tensor
+import torch.nn as nn 
+import torch.optim as optim
+import torchvision.transforms as transforms
+from torchvision import models, datasets
+from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader
+import os
+import torch
+from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+from skimage import io
+from PIL import Image
+from PIL import ImageFile
+
+products_df = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
+image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
+
+class TextProcessor(torch.utils.data.Dataset):
+
+    def __init__(self, max_desc_len = 50):
+        
+
+
+        self.max_desc_len = max_desc_len
+        # self.description = text
+        self.tokenizer = get_tokenizer('basic_english')
+        # self.vocab = self.get_vocab()
+
+    
+
+    def get_vocab(self, text):
+
+        def yield_tokens():
+            tokens = self.tokenizer(text)
+            yield tokens
+        token_generator = yield_tokens()
+
+        vocab = build_vocab_from_iterator(token_generator, specials=['<UNK>'])
+        print('length of vocab:', len(vocab))
+        return vocab
+
+
+    def tokenize_descriptions(self, descriptions):
+        def tokenize_description(description):
+            words = self.tokenizer(description)
+            words = words[:50]
+            pad_length = self.max_desc_len - len(words)
+            words.extend(['<UNK>'] * pad_length)
+            tokenized_desc = self.vocab(words)
+            tokenized_desc = torch.tensor(tokenized_desc)
+            return tokenized_desc
+
+        descriptions = tokenize_description(descriptions)
+        # .apply(tokenize_description)
+        return descriptions
+
+    def __call__(self, text):
+        self.vocab = self.get_vocab(text)
+        sentence = text
+        encoded = self.tokenize_descriptions(sentence)
+        description = encoded
+        return description
+
+
+
+
+    @staticmethod
+    def get_category(x, level: int = 0):
+        return x.split('/')[level].strip()
+
+<<<<<<< HEAD
+if __name__ == '__main__':
+    text_test = TextProcessor()
+    var = text_test('big ole shelf, sdc, frvdf, erfsdc, efvsdc, qdfergv')
+    print(var)
+    print(var.size)
+=======
+
+text_test = TextProcessor()
+var = text_test('big ole shelf, sdc, frvdf, erfsdc, efvsdc, qdfergv')
+print(var)
+print(var.size)
+>>>>>>> f2ad08c734372b267d827f1e778359060c38f46b
+
+# %%
