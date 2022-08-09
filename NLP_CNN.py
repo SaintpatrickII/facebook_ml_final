@@ -139,7 +139,7 @@ class CNN(torch.nn.Module):
             torch.nn.Dropout(),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(6272, 13),
+            torch.nn.Linear(48, 13),
             torch.nn.Softmax()
         )
 

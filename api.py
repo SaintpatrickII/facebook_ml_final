@@ -46,17 +46,11 @@ device = 'cpu'
 
 
 class ImageTextClassifier(nn.Module):
-    def __init__(self, decoder=None):
+    def __init__(self, decoder: dict =None):
         super(ImageTextClassifier, self).__init__()
         self.features = models.resnet50(pretrained=True).to(device)
         self.text_model = TextClassifier()
         self.main = nn.Sequential(nn.Linear(256, 13))
-
-class CNN(nn.Module):
-    def __init__(self, num_classes, decoder : dict = None):
-        super(CNN, self).__init__()
-        self.features = models.resnet50(pretrained=True).to(device)
-
         for i, param in enumerate(self.features.parameters()):
             if i < 47:
                 param.requires_grad=False
@@ -73,7 +67,7 @@ class CNN(nn.Module):
             # torch.nn.Linear(128, 13)
             )
         self.decoder = decoder
-        self.main = nn.Sequential(nn.Linear(256, num_classes))
+        self.main = nn.Sequential(nn.Linear(256, 13))
 
     def forward(self, image_features, text_features):
         image_features = self.features(image_features)
@@ -84,27 +78,27 @@ class CNN(nn.Module):
         return combined_features
 
 
-    def predict(self, combined):
+    def predict(self, image, text):
         with torch.no_grad():
-            x = self.forward(combined)
+            x = self.forward(image, text)
             return x
 
-    def predict_prob(self, combined):
+    def predict_prob(self, image, text):
         with torch.no_grad():
-            x = self.forward(combined)
+            x = self.forward(image, text)
             return torch.softmax(x, dim=1)
 
 
-    def predict_class(self, combined):
+    def predict_class(self, image, text):
         with torch.no_grad():
-            x = self.forward(combined)
+            x = self.forward(image, text)
             return self.decoder(int(torch.argmax(x, dim=1)))
 
 
 with open('combined_decoder.pkl', 'rb') as f:
     combined_decoder = pickle.load(f)
 image_model = ImageTextClassifier(decoder=combined_decoder)
-image_model.load_state_dict(torch.load('combined.pt', map_location='cpu'))
+image_model.load_state_dict(torch.load('combined.pt', map_location='cpu'), strict=False)
 
 
 
@@ -135,7 +129,7 @@ def test_post(image : UploadFile = File(...), text: str = Form(...)):
 #     return 'yyyyeeeessss'
 
 if __name__ == '__main__':
-    uvicorn.run('api:app', host='0.0.0.0', port=8080)
+    uvicorn.run('api:app', host='0.0.0.0', port=8090)
 
 # @app.post('/test')
 # def test_post(image : UploadFile(...)):
