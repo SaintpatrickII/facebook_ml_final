@@ -26,12 +26,14 @@ class productsPreProcessing(Dataset):
         products_df['category'] = products_df['category'].apply(lambda x: self.get_category(x, labels_level))
         self.labels = products_df['category'].to_list()
         self.descriptions = products_df['product_description']
-        # ].to_list()
         self.num_classes = len(set(self.labels))
         self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
         self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
         self.tokenizer = get_tokenizer('basic_english')
         self.vocab = self.get_vocab()
+        self.vocab_length = len(self.vocab)
+        print(self.vocab_length)
+        self.vocab_len = self.get_vocab_length()
         self.descriptions = self.tokenize_descriptions(self.descriptions)
         
         
@@ -54,9 +56,13 @@ class productsPreProcessing(Dataset):
         token_generator = yield_tokens()
 
         vocab = build_vocab_from_iterator(token_generator, specials=['<UNK>'])
-        print('length of vocab:', len(vocab))
+        # print('length of vocab:', len(vocab))
         return vocab
 
+    def get_vocab_length(self):
+        vocab_len = len(self.vocab)
+        print(vocab_len)
+        return vocab_len
 
     """
     get_vocab:
@@ -122,27 +128,33 @@ class productsPreProcessing(Dataset):
 
 
 dataset = productsPreProcessing()
+vocab_len = dataset.get_vocab_length()
 
 print(dataset[0], dataset.decoder[dataset[0][1]])
 
 
 #%%
 class CNN(torch.nn.Module):
-    def __init__(self, pretrained_weights=None):
+    def __init__(self, pretrained_weights=None, decoder: dict= None, vocab_length: int = None):
+    # vocab_length: int = None):
         super().__init__()
-        no_words = 28381
+        # no_words = 28381
+        # vocab_length = productsPreProcessing.get_vocab_length()
         embedding_size = 100
-        self.embedding = torch.nn.Embedding(no_words, embedding_size)
+        self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
             torch.nn.Conv1d(embedding_size, 32, 2),
             torch.nn.ReLU(),
             torch.nn.Conv1d(32, 64, 2),
+            torch.nn.MaxPool1d(kernel_size=2),
             torch.nn.Dropout(),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(6272, 13),
-            torch.nn.Softmax()
+            torch.nn.Linear(3136, 98),
+            torch.nn.ReLU(),
+            torch.nn.Linear(98, 13)
         )
+        self.decoder = decoder
 
 
     '''
@@ -165,8 +177,9 @@ class CNN(torch.nn.Module):
     :param X: the input data
     :return: The output of the last layer of the network.
     """
-
-cnn = CNN()
+# current_vocab_length = productsPreProcessing.get_vocab_length()
+cnn = CNN(vocab_length=vocab_len)
+    # vocab_length=len(current_vocab_length))
 
 
 
@@ -259,7 +272,7 @@ def train_model(model, epochs):
     :param epochs: number of times to iterate over the entire dataset
     """
 
-train_model(cnn, 20)
+train_model(cnn, 50)
 
 
 def check_accuracy(loader, model):
@@ -298,7 +311,7 @@ def check_accuracy(loader, model):
 
 
 check_accuracy(train_samples, cnn)
-check_accuracy(val_samples, cnn)
+# check_accuracy(val_samples, cnn)
 
 
 

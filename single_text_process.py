@@ -28,7 +28,7 @@ image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
 
 class TextProcessor(torch.utils.data.Dataset):
 
-    def __init__(self, max_desc_len = 50):
+    def __init__(self, max_desc_len = 100):
         """
         The function takes in a maximum description length and returns a tokenizer
         
@@ -37,6 +37,7 @@ class TextProcessor(torch.utils.data.Dataset):
         """
         self.max_desc_len = max_desc_len
         self.tokenizer = get_tokenizer('basic_english')
+        # self.vocab = self.get_vocab()
 
     
 
@@ -59,6 +60,12 @@ class TextProcessor(torch.utils.data.Dataset):
         return vocab
 
 
+    def get_vocab_length(self, vocab):
+        # vocab = self.vocab
+        vocab_len = len(vocab)
+        print(vocab_len)
+        return vocab_len
+
     def tokenize_descriptions(self, descriptions):
         """
         The function takes in a list of descriptions, and returns a list of tokenized descriptions
@@ -68,7 +75,7 @@ class TextProcessor(torch.utils.data.Dataset):
         """
         def tokenize_description(description):
             words = self.tokenizer(description)
-            words = words[:50]
+            words = words[:100]
             pad_length = self.max_desc_len - len(words)
             words.extend(['<UNK>'] * pad_length)
             tokenized_desc = self.vocab(words)
@@ -87,6 +94,7 @@ class TextProcessor(torch.utils.data.Dataset):
         :return: The encoded description of the sentence.
         """
         self.vocab = self.get_vocab(text)
+        self.vocab_len = self.get_vocab_length(text)
         sentence = text
         encoded = self.tokenize_descriptions(sentence)
         description = encoded

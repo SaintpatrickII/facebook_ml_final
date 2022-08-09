@@ -29,7 +29,7 @@ batch_size = 32
 
 class ImageTextDataloader(torch.utils.data.Dataset):
 
-    def __init__(self, transform: transforms = None, labels_level : int=0, max_desc_len = 50):
+    def __init__(self, transform: transforms = None, labels_level : int=0, max_desc_len = 100):
         
         """
         The function takes in a dataframe of products, a folder of images, a transform, a labels_level
@@ -115,7 +115,7 @@ class ImageTextDataloader(torch.utils.data.Dataset):
         """
         def tokenize_description(description):
             words = self.tokenizer(description)
-            words = words[:50]
+            words = words[:100]
             pad_length = self.max_desc_len - len(words)
             words.extend(['<UNK>'] * pad_length)
             tokenized_desc = self.vocab(words)
