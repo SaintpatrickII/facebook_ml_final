@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
+import pickle
 
 
 products = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
@@ -139,7 +140,7 @@ class CNN(torch.nn.Module):
             torch.nn.Dropout(),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(48, 13),
+            torch.nn.Linear(6272, 13),
             torch.nn.Softmax()
         )
 
@@ -258,7 +259,7 @@ def train_model(model, epochs):
     :param epochs: number of times to iterate over the entire dataset
     """
 
-train_model(cnn, 50)
+train_model(cnn, 20)
 
 
 def check_accuracy(loader, model):
@@ -281,7 +282,11 @@ def check_accuracy(loader, model):
         acc = float(num_correct) / num_samples
         print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
 
-
+    model_save_name = 'text_cnn.pt'
+    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
+    torch.save(model.state_dict(), path)
+    with open('text_decoder.pkl', 'wb') as f:
+        pickle.dump(dataset.decoder, f)
     """
     check accuracy:
 
@@ -297,11 +302,11 @@ check_accuracy(val_samples, cnn)
 
 
 
-def save_model():
-    model_save_name = 'cnn_Word2Vec.pt'
-    path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
-    torch.save(cnn.state_dict(), path)
-save_model()
+# def save_model():
+#     model_save_name = 'cnn_Word2Vec.pt'
+#     path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
+#     torch.save(cnn.state_dict(), path)
+# save_model()
 
 
 '''
