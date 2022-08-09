@@ -130,30 +130,28 @@ device = 'cpu'
 
 
 
+# vocab_len = text_processor.get_vocab_length()
 
 
 class TextClassifier(torch.nn.Module):
-    def __init__(self, pretrained_weights=None, decoder: dict =None):
-        """
-        We create an embedding layer with 28381 words and 50 dimensions, then we create a sequential
-        model with a convolutional layer with 32 filters, a ReLU activation, a convolutional layer with
-        64 filters, a dropout layer, a ReLU activation, a flatten layer, and a linear layer with 128
-        neurons
-        
-        :param pretrained_weights: This is the path to the pretrained weights
-        """
+    def __init__(self, pretrained_weights=None, decoder: dict= None, vocab_length: int = None):
+    # vocab_length: int = None):
         super().__init__()
-        no_words = 28381
+        # no_words = 28381
+        # vocab_length = productsPreProcessing.get_vocab_length()
         embedding_size = 100
-        self.embedding = torch.nn.Embedding(no_words, embedding_size)
+        self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
             torch.nn.Conv1d(embedding_size, 32, 2),
             torch.nn.ReLU(),
             torch.nn.Conv1d(32, 64, 2),
+            torch.nn.MaxPool1d(kernel_size=2),
             torch.nn.Dropout(),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(6272, 13)
+            torch.nn.Linear(3136, 98),
+            torch.nn.ReLU(),
+            torch.nn.Linear(98, 13)
         )
         self.decoder = decoder
     
@@ -185,8 +183,10 @@ class TextClassifier(torch.nn.Module):
 
 with open('text_decoder.pkl', 'rb') as f:
     combined_decoder = pickle.load(f)
-text_model = TextClassifier(decoder=combined_decoder)
-text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
+# text_model = TextClassifier(decoder=combined_decoder, vocab_length=)
+# # , vocab_length=vocab_len)
+# text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
+#  strict=False)
 
 @app.post('/test')
 def test_post(text: str = Form(...)):
@@ -194,14 +194,19 @@ def test_post(text: str = Form(...)):
 
     # processed_image = image_processor(img)
     processed_text = text_processor(text)
-
-    prediction = TextClassifier.predict(processed_text)
-    pred_prob = TextClassifier.predict_prob(processed_text)
-    class_pred = TextClassifier.predict_class(processed_text)
+    text_model = TextClassifier(decoder=combined_decoder, vocab_length=text_processor.get_vocab_length(text))
+    text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
+    prediction = text_model.predict(processed_text)
+    pred_prob = text_model.predict_prob(processed_text)
+    class_pred = text_model.predict_class(processed_text)
     print(prediction)
     print(pred_prob)
     print(class_pred)
     return JSONResponse(status_code=200, content={'prediction' : prediction.tolist(), 'probability': pred_prob.tolist(), 'class': class_pred})
+
+
+
+
 
 
 if __name__ == '__main__':
