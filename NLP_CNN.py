@@ -61,8 +61,9 @@ class productsPreProcessing(Dataset):
 
     def get_vocab_length(self):
         vocab_len = len(self.vocab)
-        print(vocab_len)
+        # print(vocab_len)
         return vocab_len
+
 
     """
     get_vocab:
@@ -99,6 +100,20 @@ class productsPreProcessing(Dataset):
     """
 
 
+    def embedding(self):
+        embedding_size = 100
+        vocab_length = len(self.vocab)
+        # vocab_length = len(description)
+        # print(vocab_length)
+        embedding = torch.nn.Embedding(vocab_length, embedding_size)
+        # print(vocab_length)
+        # print(embedding_size)
+        # print(embedding)
+        # print(embedding[0][0])
+        # print(embedding([0][1]))
+        return embedding
+
+
     @staticmethod
     def get_category(x, level: int = 0):
         return x.split('/')[level].strip()
@@ -116,6 +131,7 @@ class productsPreProcessing(Dataset):
 
     def __getitem__(self, idx):
         description = self.descriptions[idx]
+        # description = self.embedding(description)
         label = self.labels[idx]
         label = self.encoder[label]
         return (description, label)
@@ -129,21 +145,21 @@ class productsPreProcessing(Dataset):
 
 dataset = productsPreProcessing()
 vocab_len = dataset.get_vocab_length()
-
-print(dataset[0], dataset.decoder[dataset[0][1]])
+# dataset_embedding = dataset.embedding()
+print(dataset[2], dataset.decoder[dataset[0][1]])
 
 
 #%%
 class CNN(torch.nn.Module):
-    def __init__(self, pretrained_weights=None, decoder: dict= None, vocab_length: int = None):
-    # vocab_length: int = None):
+    def __init__(self, pretrained_weights=None, decoder: dict= None):
+    #  embedding = None):
         super().__init__()
         # no_words = 28381
         # vocab_length = productsPreProcessing.get_vocab_length()
-        embedding_size = 100
-        self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
+        # embedding_size = 100
+        # self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
-            torch.nn.Conv1d(embedding_size, 32, 2),
+            torch.nn.Conv1d(100, 32, 2),
             torch.nn.ReLU(),
             torch.nn.Conv1d(32, 64, 2),
             torch.nn.MaxPool1d(kernel_size=2),
@@ -166,7 +182,7 @@ class CNN(torch.nn.Module):
 
     def forward(self, X):
         
-        return self.layers(self.embedding(X))
+        return self.layers(dataset.embedding())
 
 
     """
@@ -178,7 +194,9 @@ class CNN(torch.nn.Module):
     :return: The output of the last layer of the network.
     """
 # current_vocab_length = productsPreProcessing.get_vocab_length()
-cnn = CNN(vocab_length=vocab_len)
+cnn = CNN()
+    
+    # embedding=dataset_embedding)
     # vocab_length=len(current_vocab_length))
 
 
