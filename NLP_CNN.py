@@ -100,11 +100,11 @@ class productsPreProcessing(Dataset):
     """
 
 
-    def embedding(self):
+    def embedding(self, description):
         embedding_size = 100
-        vocab_length = len(self.vocab)
+        vocab_length = len(description)
         # vocab_length = len(description)
-        # print(vocab_length)
+        print(vocab_length)
         embedding = torch.nn.Embedding(vocab_length, embedding_size)
         # print(vocab_length)
         # print(embedding_size)
@@ -146,7 +146,7 @@ class productsPreProcessing(Dataset):
 dataset = productsPreProcessing()
 vocab_len = dataset.get_vocab_length()
 # dataset_embedding = dataset.embedding()
-print(dataset[2], dataset.decoder[dataset[0][1]])
+# print(dataset[2], dataset.decoder[dataset[0][1]])
 
 
 #%%
@@ -182,7 +182,7 @@ class CNN(torch.nn.Module):
 
     def forward(self, X):
         
-        return self.layers(dataset.embedding())
+        return self.layers(dataset.embedding(X))
 
 
     """
