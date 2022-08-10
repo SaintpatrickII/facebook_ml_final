@@ -82,8 +82,14 @@ class productsPreProcessing(Dataset):
             pad_length = self.max_seq_len - len(words)
             words.extend(['<UNK>'] * pad_length)
             tokenized_desc = self.vocab(words)
-            tokenized_desc = torch.tensor(tokenized_desc)
-            return tokenized_desc
+            for word in tokenized_desc:
+                vocab_length = len(self.vocab)
+                embedding_size = 8
+                embedding = torch.nn.Embedding(vocab_length, embedding_size)
+                tokenized_desc = torch.tensor(word, dtype=torch.long)
+                embedded_desc = embedding(tokenized_desc)
+                # print(embedded_desc)
+                return embedded_desc
 
         descriptions = descriptions.apply(tokenize_description)
         return descriptions
@@ -99,19 +105,23 @@ class productsPreProcessing(Dataset):
     :return: A list of tokenized descriptions
     """
 
-
-    def embedding(self, description):
-        embedding_size = 100
-        vocab_length = len(description)
-        # vocab_length = len(description)
-        print(vocab_length)
-        embedding = torch.nn.Embedding(vocab_length, embedding_size)
-        # print(vocab_length)
-        # print(embedding_size)
-        # print(embedding)
-        # print(embedding[0][0])
-        # print(embedding([0][1]))
-        return embedding
+    # def create_embeddings(self, descriptions):
+    #     def embedding( description):
+    #         embedding_size = 100
+    #         vocab_length = len(description)
+    #         lookup_tensors = {y: x for (x, y) in enumerate(set(description))}
+    #         # vocab_length = len(description)
+    #         # print(lookup_tensors)
+    #         # print(vocab_length)
+    #         embedding = torch.nn.Embedding(vocab_length, embedding_size)
+    #         words = lookup_tensors.values()
+    #         lookup_tensor = torch.tensor(words, dtype=torch.long)
+                
+    #         # print(vocab_length)
+    #         # print(embedding_size)
+    #         embedded_desc = embedding(lookup_tensor)
+    #         # print(embedding([0][1]))
+    #         return embedded_desc
 
 
     @staticmethod
@@ -159,16 +169,16 @@ class CNN(torch.nn.Module):
         # embedding_size = 100
         # self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
-            torch.nn.Conv1d(100, 32, 2),
+            torch.nn.Conv1d(32, 512, 1),
             torch.nn.ReLU(),
-            torch.nn.Conv1d(32, 64, 2),
-            torch.nn.MaxPool1d(kernel_size=2),
-            torch.nn.Dropout(),
+            torch.nn.Conv1d(512, 256, 1),
+            # torch.nn.MaxPool1d(kernel_size=2),
+            # torch.nn.Dropout(),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(3136, 98),
-            torch.nn.ReLU(),
-            torch.nn.Linear(98, 13)
+            torch.nn.Linear(16, 13)
+            # torch.nn.ReLU(),
+            # torch.nn.Linear(98, 13)
         )
         self.decoder = decoder
 
@@ -182,7 +192,8 @@ class CNN(torch.nn.Module):
 
     def forward(self, X):
         
-        return self.layers(dataset.embedding(X))
+        return self.layers(X)
+            # dataset.embedding(X))
 
 
     """
@@ -290,7 +301,7 @@ def train_model(model, epochs):
     :param epochs: number of times to iterate over the entire dataset
     """
 
-train_model(cnn, 50)
+train_model(cnn, 20)
 
 
 def check_accuracy(loader, model):
