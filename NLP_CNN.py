@@ -21,7 +21,7 @@ class productsPreProcessing(Dataset):
     def __init__(self, labels_level: int = 0):
         super().__init__()
         self.df = pd.read_csv(products)
-        self.max_seq_len = 100
+        self.max_seq_len = 8
         products_df = self.df
         products_df['category'] = products_df['category'].apply(lambda x: self.get_category(x, labels_level))
         self.labels = products_df['category'].to_list()
@@ -141,7 +141,7 @@ class productsPreProcessing(Dataset):
 
     def __getitem__(self, idx):
         description = self.descriptions[idx]
-        # description = self.embedding(description)
+        description = torch.tensor(description)
         label = self.labels[idx]
         label = self.encoder[label]
         return (description, label)
@@ -156,7 +156,7 @@ class productsPreProcessing(Dataset):
 dataset = productsPreProcessing()
 vocab_len = dataset.get_vocab_length()
 # dataset_embedding = dataset.embedding()
-# print(dataset[2], dataset.decoder[dataset[0][1]])
+print(dataset[2], dataset.decoder[dataset[0][1]])
 
 
 #%%
@@ -169,14 +169,18 @@ class CNN(torch.nn.Module):
         # embedding_size = 100
         # self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
-            torch.nn.Conv1d(32, 512, 1),
+            torch.nn.Conv1d(8, 256, 1),
             torch.nn.ReLU(),
-            torch.nn.Conv1d(512, 256, 1),
+            torch.nn.Conv1d(256, 128, 1)
+        )
+            # torch.nn.ReLU(),
+            # torch.nn.Conv1d(64, 8, 1),
             # torch.nn.MaxPool1d(kernel_size=2),
             # torch.nn.Dropout(),
+        self.fc_layers = torch.nn.Sequential(
             torch.nn.ReLU(),
-            torch.nn.Flatten(),
-            torch.nn.Linear(16, 13)
+            # torch.nn.Flatten(),
+            torch.nn.Linear(128, 13)
             # torch.nn.ReLU(),
             # torch.nn.Linear(98, 13)
         )
@@ -191,8 +195,12 @@ class CNN(torch.nn.Module):
     '''
 
     def forward(self, X):
-        
-        return self.layers(X)
+        x = self.layers(X)
+        # print('x before reshape;', x.shape)
+        x_linear = x.view(-1, 128)
+        # print('x after reshape;', x.shape)
+        x_fc = self.fc_layers(x_linear)
+        return x_fc
             # dataset.embedding(X))
 
 
@@ -213,7 +221,7 @@ cnn = CNN()
 
 
 validation_split = 0.15
-batch_size = 32
+batch_size =8
 shuffle_dataset = True
 random_seed = 42
 
@@ -257,7 +265,9 @@ def train_model(model, epochs):
                 if phase == 'train':
                     torch.set_grad_enabled(phase)
                 num_correct = 0
-                num_samples = 0 
+                num_samples = 0
+                # print('this is features:', features.shape)
+                # print('this is labels:', labels.shape) 
                 # print(features)
                 predict = model(features)
                 labels = labels
@@ -269,7 +279,7 @@ def train_model(model, epochs):
                 loss.backward()
                 optimiser.step()
                 optimiser.zero_grad()
-                if i % 30 == 29:
+                if i % 100 == 99:
                     print(f'Epoch {epoch + 1}/{epochs}')
                     print('-' * 10)
                     if phase == train_samples:
