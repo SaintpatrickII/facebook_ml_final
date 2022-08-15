@@ -131,7 +131,7 @@ class CNN(nn.Module):
             torch.nn.ReLU(),
             torch.nn.Linear(512, 128),
             torch.nn.ReLU(),
-            torch.nn.Linear((128), 13)
+            torch.nn.Linear(128, 13)
             )
 
 
