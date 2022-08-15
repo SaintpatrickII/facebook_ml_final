@@ -75,34 +75,28 @@ device = get_default_device()
 
 
 class TextClassifier(torch.nn.Module):
-    def __init__(self, pretrained_weights=None):
-        """
-        We create an embedding layer with 28381 words and 50 dimensions, then we create a sequential
-        model with a convolutional layer with 32 filters, a ReLU activation, a convolutional layer with
-        64 filters, a dropout layer, a ReLU activation, a flatten layer, and a linear layer with 128
-        neurons
-        
-        :param pretrained_weights: This is the path to the pretrained weights
-        """
+    def __init__(self,
+                 input_size: int = 768,
+                 num_classes: int = 13,
+                 decoder: dict = None):
         super().__init__()
-        no_words = 28381
-        embedding_size = 50
-        self.embedding = torch.nn.Embedding(no_words, embedding_size)
-        self.layers = torch.nn.Sequential(
-            torch.nn.Conv1d(embedding_size, 32, 2),
-            torch.nn.ReLU(),
-            torch.nn.Conv1d(32, 64, 2),
-            torch.nn.Dropout(),
-            torch.nn.ReLU(),
-            torch.nn.Flatten(),
-            torch.nn.Linear(3072, 128)
-        )
-
-
-    def forward(self, X):
-        
-        return self.layers(self.embedding(X))
-
+        self.main = nn.Sequential(nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.Flatten(),
+                                    nn.Linear(384, 128))
+        self.decoder = decoder
+    def forward(self, inp):
+        x = self.main(inp)
+        return x
 
     """
     forward: 
@@ -265,12 +259,12 @@ if __name__ == '__main__':
     with open('combined_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
                     
-if __name__ == '__main__':
-    train_model(model, 10)
-    # optimiser_ft)
-    check_accuracy(dataloader, model)
-    # model_save_name = 'combined.pt'
-    # path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
+# if __name__ == '__main__':
+#     train_model(model, 10)
+#     # optimiser_ft)
+#     check_accuracy(dataloader, model)
+#     # model_save_name = 'combined.pt'
+#     # path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
 
 # %%
 
