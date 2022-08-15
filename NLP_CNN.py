@@ -84,7 +84,7 @@ class productsPreProcessing(Dataset):
             tokenized_desc = self.vocab(words)
             for word in tokenized_desc:
                 vocab_length = len(self.vocab)
-                embedding_size = 8
+                embedding_size = 32
                 embedding = torch.nn.Embedding(vocab_length, embedding_size)
                 tokenized_desc = torch.tensor(word, dtype=torch.long)
                 embedded_desc = embedding(tokenized_desc)
@@ -159,6 +159,8 @@ vocab_len = dataset.get_vocab_length()
 print(dataset[2], dataset.decoder[dataset[0][1]])
 
 
+# train_loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=32, shuffle=True)
+
 #%%
 class CNN(torch.nn.Module):
     def __init__(self, pretrained_weights=None, decoder: dict= None):
@@ -169,16 +171,16 @@ class CNN(torch.nn.Module):
         # embedding_size = 100
         # self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
         self.layers = torch.nn.Sequential(
-            torch.nn.Conv1d(8, 256, 1),
+            torch.nn.Conv1d(32, 256, 1),
             torch.nn.ReLU(),
-            torch.nn.Conv1d(256, 128, 1)
+            torch.nn.Conv1d(256, 128, 1),
+            torch.nn.ReLU()
         )
             # torch.nn.ReLU(),
             # torch.nn.Conv1d(64, 8, 1),
             # torch.nn.MaxPool1d(kernel_size=2),
             # torch.nn.Dropout(),
         self.fc_layers = torch.nn.Sequential(
-            torch.nn.ReLU(),
             # torch.nn.Flatten(),
             torch.nn.Linear(128, 13)
             # torch.nn.ReLU(),
@@ -200,6 +202,7 @@ class CNN(torch.nn.Module):
         x_linear = x.view(-1, 128)
         # print('x after reshape;', x.shape)
         x_fc = self.fc_layers(x_linear)
+        # print('x after cnn loop:', x_fc.shape)
         return x_fc
             # dataset.embedding(X))
 
@@ -221,7 +224,7 @@ cnn = CNN()
 
 
 validation_split = 0.15
-batch_size =8
+batch_size =32
 shuffle_dataset = True
 random_seed = 42
 
@@ -239,9 +242,9 @@ train_sampler = SubsetRandomSampler(train_indices)
 valid_sampler = SubsetRandomSampler(val_indices)
 
 train_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
-                                           sampler=train_sampler)
+                                           sampler=train_sampler, drop_last=True)
 val_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
-                                                sampler=valid_sampler)
+                                                sampler=valid_sampler, drop_last=True)
 '''
 Data Splitter:
 
@@ -252,7 +255,7 @@ def train_model(model, epochs):
     writer = SummaryWriter()
     model.train()
     print('training model')
-    optimiser = optim.SGD(model.parameters(), lr=0.1)
+    optimiser = optim.SGD(model.parameters(), lr=0.05)
     for epoch in range(epochs):
         for phase in [train_samples, val_samples]:
             if phase == train_samples:
