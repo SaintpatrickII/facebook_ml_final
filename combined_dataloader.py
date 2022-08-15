@@ -22,6 +22,8 @@ import torchvision.transforms as transforms
 from skimage import io
 from PIL import Image
 from PIL import ImageFile
+from transformers import BertTokenizer
+from transformers import BertModel
 
 products_df = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
 image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
@@ -29,7 +31,7 @@ batch_size = 32
 
 class ImageTextDataloader(torch.utils.data.Dataset):
 
-    def __init__(self, transform: transforms = None, labels_level : int=0, max_desc_len = 100):
+    def __init__(self, transform: transforms = None, labels_level : int=0, max_len = 100):
         
         """
         The function takes in a dataframe of products, a folder of images, a transform, a labels_level
@@ -57,7 +59,6 @@ class ImageTextDataloader(torch.utils.data.Dataset):
         self.products = pd.read_csv(products_df, lineterminator='\n')
         self.root_dir = image_folder
         self.transform = transform
-        self.max_desc_len = max_desc_len
         self.products['category'] = self.products['category'].apply(lambda x: self.get_category(x, labels_level))
         self.descriptions = self.products['product_description']
         self.image_id = self.products['image_id']
@@ -67,6 +68,12 @@ class ImageTextDataloader(torch.utils.data.Dataset):
 
         self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
         self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
+
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
+        self.model.eval()
+        self.max_length = max_len
+        
 
         if transform == None:
             self.transform = transforms.Compose([
@@ -81,50 +88,10 @@ class ImageTextDataloader(torch.utils.data.Dataset):
                 ])
 
 
-        self.tokenizer = get_tokenizer('basic_english')
-        self.vocab = self.get_vocab()
+        # self.tokenizer = get_tokenizer('basic_english')
         assert len(self.descriptions) == len(self.labels) == len(self.image_id)
     
 
-    def get_vocab(self):
-        
-        """
-        We use the tokenizer to tokenize each description in the dataset, and then we use the
-        build_vocab_from_iterator function to build the vocabulary from the tokenized descriptions
-        :return: A dictionary of the words in the vocab and their index.
-        """
-
-        def yield_tokens():
-            for description in self.descriptions:
-                tokens = self.tokenizer(description)
-                yield tokens
-        token_generator = yield_tokens()
-
-        vocab = build_vocab_from_iterator(token_generator, specials=['<UNK>'])
-        print('length of vocab:', len(vocab))
-        return vocab
-
-
-    def tokenize_descriptions(self, descriptions):
-        
-        """
-        The function takes in a list of descriptions, and returns a list of tokenized descriptions
-        
-        :param descriptions: a pandas series of descriptions
-        :return: A list of tokenized descriptions
-        """
-        def tokenize_description(description):
-            words = self.tokenizer(description)
-            words = words[:100]
-            pad_length = self.max_desc_len - len(words)
-            words.extend(['<UNK>'] * pad_length)
-            tokenized_desc = self.vocab(words)
-            tokenized_desc = torch.tensor(tokenized_desc)
-            return tokenized_desc
-
-        descriptions = tokenize_description(descriptions)
-        # .apply(tokenize_description)
-        return descriptions
 
 
     def __len__(self):
@@ -149,8 +116,12 @@ class ImageTextDataloader(torch.utils.data.Dataset):
         image = Image.open(self.root_dir + (self.products.iloc[index, 1] + '.jpg')).convert('RGB')
         image = self.transform(image)
         sentence = self.descriptions[index]
-        encoded = self.tokenize_descriptions(sentence)
-        description = encoded
+        encoded = self.tokenizer.batch_encode_plus([sentence], max_length=self.max_length, padding='max_length', truncation=True)
+        encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        with torch.no_grad():
+            description = self.model(**encoded).last_hidden_state.swapaxes(1,2)
+        
+        description = description.squeeze(0)
         return image, description, label
 
 
@@ -174,7 +145,7 @@ if __name__ == '__main__':
         print(image)
         print(description)
         print(labels)
-        # print(description.size())
+        print(description.size())
         print(image.size())
         if i == 0:
             break
