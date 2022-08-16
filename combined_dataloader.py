@@ -134,7 +134,7 @@ class ImageTextDataloader(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
     dataset = ImageTextDataloader()
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=12,shuffle=True, num_workers=1)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1,shuffle=True, num_workers=1)
     
     # print(dataset[3000])
     # print('-'*10)
