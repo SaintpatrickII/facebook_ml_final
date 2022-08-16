@@ -92,7 +92,7 @@ class TextClassifier(torch.nn.Module):
                                     nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
                                     nn.ReLU(),
                                     nn.Flatten(),
-                                    nn.Linear(384, 128))
+                                    nn.Linear(384, 128)).to(device)
         self.decoder = decoder
     def forward(self, inp):
         x = self.main(inp)
@@ -251,13 +251,15 @@ def check_accuracy(loader, model):
         pickle.dump(dataset.decoder, f)
                     
 if __name__ == '__main__':
-    train_model(model, 20)
+    train_model(model, 7)
 
     model_save_name = 'combined.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(model.state_dict(), path)
     with open('combined_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
+
+    check_accuracy(dataloader, model)
                     
 # if __name__ == '__main__':
 #     train_model(model, 10)
