@@ -147,6 +147,7 @@ if __name__ == '__main__':
         print(labels)
         print(description.size())
         print(image.size())
+        print(labels.size())
         if i == 0:
             break
 # /Users/paddy/Desktop/AiCore/facebook_ml/Images/0a3267c5-b660-4bef-9915-56b11cd67d8b.jpg

@@ -1,3 +1,4 @@
+from email.policy import strict
 import fastapi
 from fastapi import FastAPI, File
 from fastapi import Request
@@ -91,13 +92,13 @@ class ImageTextClassifier(nn.Module):
     def predict_class(self, image, text):
         with torch.no_grad():
             x = self.forward(image, text)
-            return self.decoder(int(torch.argmax(x, dim=1)))
+            return self.decoder[int(torch.argmax(x, dim=1))]
 
 
 with open('combined_decoder.pkl', 'rb') as f:
     combined_decoder = pickle.load(f)
-image_model = ImageTextClassifier(decoder=combined_decoder)
-image_model.load_state_dict(torch.load('combined.pt', map_location='cpu'))
+combined_model = ImageTextClassifier(decoder=combined_decoder)
+combined_model.load_state_dict(torch.load('combined.pt', map_location='cpu'))
 # , strict=False)
 
 
@@ -106,16 +107,16 @@ image_model.load_state_dict(torch.load('combined.pt', map_location='cpu'))
 #     print(x)
 #     return 'get was successful'
 
-@app.post('/test')
+@app.post('/testcombined')
 def test_post(image : UploadFile = File(...), text: str = Form(...)):
     img = Image.open(image.file)
 
     processed_image = image_processor(img)
     processed_text = text_processor(text)
 
-    prediction = image_model.predict(processed_image, processed_text)
-    pred_prob = image_model.predict_prob(processed_image, processed_text)
-    class_pred = image_model.predict_class(processed_image, processed_text)
+    prediction = combined_model.predict(processed_image, processed_text)
+    pred_prob = combined_model.predict_prob(processed_image, processed_text)
+    class_pred = combined_model.predict_class(processed_image, processed_text)
     print(prediction)
     print(pred_prob)
     print(class_pred)
@@ -132,80 +133,161 @@ def test_post(image : UploadFile = File(...), text: str = Form(...)):
 # vocab_len = text_processor.get_vocab_length()
 
 
-# class TextClassifier(torch.nn.Module):
-#     def __init__(self, pretrained_weights=None, decoder: dict= None, vocab_length: int = None):
-#     # vocab_length: int = None):
-#         super().__init__()
-#         # no_words = 28381
-#         # vocab_length = productsPreProcessing.get_vocab_length()
-#         embedding_size = 100
-#         self.embedding = torch.nn.Embedding(vocab_length, embedding_size)
-#         self.layers = torch.nn.Sequential(
-#             torch.nn.Conv1d(embedding_size, 32, 2),
-#             torch.nn.ReLU(),
-#             torch.nn.Conv1d(32, 64, 2),
-#             torch.nn.MaxPool1d(kernel_size=2),
-#             torch.nn.Dropout(),
-#             torch.nn.ReLU(),
-#             torch.nn.Flatten(),
-#             torch.nn.Linear(3136, 98),
-#             torch.nn.ReLU(),
-#             torch.nn.Linear(98, 13)
-#         )
-#         self.decoder = decoder
+class TextClassifierSingle(torch.nn.Module):
+    def __init__(self,
+                 input_size: int = 768,
+                 num_classes: int = 13,
+                 decoder: dict = None):
+        super().__init__()
+        self.main = nn.Sequential(nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.Flatten(),
+                                    nn.Linear(384 , 128),
+                                    nn.ReLU(),
+                                    nn.Linear(128, num_classes))
+        self.decoder = decoder
+    def forward(self, inp):
+        x = self.main(inp)
+        return x
     
     
+    def predict(self, text):
+        with torch.no_grad():
+            x = self.forward(text)
+            return x
+
+    def predict_prob(self, text):
+        with torch.no_grad():
+            x = self.forward(text)
+            return torch.softmax(x, dim=1)
+
+
+    def predict_class(self, text):
+        with torch.no_grad():
+            x = self.forward(text)
+            return self.decoder[int(torch.argmax(x, dim=1))]
+
+
+with open('text_decoder.pkl', 'rb') as f:
+    text_decoder = pickle.load(f)
+
+n_classes = len(text_decoder)
+print(n_classes)
+text_model = TextClassifierSingle(decoder=text_decoder)
+#  num_classes= n_classes)
+# , vocab_length=vocab_len)
+text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'), strict=False)
+
+
+
+@app.post('/testtext')
+def test_post(text: str = Form(...)):
+    processed_text = text_processor(text)
+    text_model = TextClassifierSingle(decoder=combined_decoder)
+    text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
+    prediction = text_model.predict(processed_text)
+    pred_prob = text_model.predict_prob(processed_text)
+    class_pred = text_model.predict_class(processed_text)
+    print(prediction)
+    print(pred_prob)
+    print(class_pred)
+    return JSONResponse(status_code=200, content={'prediction' : prediction.tolist(), 'probability': pred_prob.tolist(), 'class': class_pred})
+
+
+
+
+
+
+class CNN(nn.Module):
+    def __init__(self, decoder: dict = None):
+        """
+        We're taking the pretrained ResNet50 model, freezing the first 47 layers, and then adding a few
+        more layers to the end of the model
+        """
+        super(CNN, self).__init__()
+        self.features = models.resnet50(pretrained=True).to(device)
+        self.decoder = decoder
+        for i, param in enumerate(self.features.parameters()):
+            if i < 47:
+                param.requires_grad=False
+            else:
+                param.requires_grad=True
+        self.features.fc = nn.Sequential(
+            nn.Linear(2048, 1024), # first arg is the size of the flattened output from resnet50
+            torch.nn.ReLU(),
+            torch.nn.Dropout(),
+            torch.nn.Linear(1024, 512),
+            torch.nn.ReLU(),
+            torch.nn.Linear(512, 128),
+            torch.nn.ReLU(),
+            torch.nn.Linear(128, 13)
+            )
+
+
+    def forward(self, x):
+        """
+        It takes in an image, applies the convolutional layers, and then flattens the output of the
+        convolutional layers into a vector
+        
+        :param x: the input to the model
+        :return: The output of the forward pass of the model.
+        """
+        x = self.features(x)
+        x = x.reshape(x.shape[0], -1)
+        return x
     
     
-    
-    
-#     def forward(self, X):
-#         return self.layers(self.embedding(X))
-    
-    
-#     def predict(self, text):
-#         with torch.no_grad():
-#             x = self.forward(text)
-#             return x
+    def predict(self, image):
+        with torch.no_grad():
+            x = self.forward(image)
+            return x
 
-#     def predict_prob(self, text):
-#         with torch.no_grad():
-#             x = self.forward(text)
-#             return torch.softmax(x, dim=1)
+    def predict_prob(self, image):
+        with torch.no_grad():
+            x = self.forward(image)
+            return torch.softmax(x, dim=1)
 
 
-#     def predict_class(self, text):
-#         with torch.no_grad():
-#             x = self.forward(text)
-#             return self.decoder(int(torch.argmax(x, dim=1)))
+    def predict_class(self, image):
+        with torch.no_grad():
+            x = self.forward(image)
+            return self.decoder[int(torch.argmax(x, dim=1))]
 
 
-# with open('text_decoder.pkl', 'rb') as f:
-#     combined_decoder = pickle.load(f)
-# # text_model = TextClassifier(decoder=combined_decoder, vocab_length=)
-# # # , vocab_length=vocab_len)
-# # text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
-# #  strict=False)
+with open('image_decoder.pkl', 'rb') as f:
+    image_decoder = pickle.load(f)
 
-# @app.post('/test')
-# def test_post(text: str = Form(...)):
-#     # img = Image.open(image.file)
-
-#     # processed_image = image_processor(img)
-#     processed_text = text_processor(text)
-#     text_model = TextClassifier(decoder=combined_decoder, vocab_length=text_processor.get_vocab_length(text))
-#     text_model.load_state_dict(torch.load('text_cnn.pt', map_location='cpu'))
-#     prediction = text_model.predict(processed_text)
-#     pred_prob = text_model.predict_prob(processed_text)
-#     class_pred = text_model.predict_class(processed_text)
-#     print(prediction)
-#     print(pred_prob)
-#     print(class_pred)
-#     return JSONResponse(status_code=200, content={'prediction' : prediction.tolist(), 'probability': pred_prob.tolist(), 'class': class_pred})
+n_classes = len(text_decoder)
+print(n_classes)
+image_model = CNN(decoder=image_decoder)
+#  num_classes= n_classes)
+# , vocab_length=vocab_len)
+image_model.load_state_dict(torch.load('image_cnn.pt', map_location='cpu'), strict=False)
 
 
 
-
+@app.post('/testimage')
+def test_post(image : UploadFile = File(...)):
+    img = Image.open(image.file)
+    processed_image = image_processor(img)
+    image_model_loaded = image_model
+    image_model_loaded.load_state_dict(torch.load('image_cnn.pt', map_location='cpu'))
+    prediction = image_model_loaded.predict(processed_image)
+    pred_prob = image_model_loaded.predict_prob(processed_image)
+    class_pred = image_model_loaded.predict_class(processed_image)
+    print(prediction)
+    print(pred_prob)
+    print(class_pred)
+    return JSONResponse(status_code=200, content={'prediction' : prediction.tolist(), 'probability': pred_prob.tolist(), 'class': class_pred})
 
 
 if __name__ == '__main__':

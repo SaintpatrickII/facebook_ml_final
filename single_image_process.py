@@ -40,10 +40,11 @@ class ImageProcessor:
         :param image: The image to be transformed
         :return: A numpy array of the image with a dimension added to the front.
         """
-        if image.mode != 'RGB':
-            image = self.transform_Gray(image)
-        else:
-            image = self.transform(image)
+        # if image.mode != 'RGB':
+        #     image = self.transform_Gray(image)
+        # else:
+        #     image = self.transform(image)
+        image = self.transform(image)
         
         # Add a dimension to the image
         image = image[None, :, :, :]

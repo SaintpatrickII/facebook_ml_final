@@ -15,76 +15,112 @@ import torch
 from torch.utils.data import Dataset
 from skimage import io
 import torchvision.transforms as transforms
+import pickle
+from PIL import Image
+from PIL import ImageFile
 
 
 
 
 
-class ImagesLoader(Dataset):
-    def __init__(self, json_file='/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/image_data.json', root_dir='/Users/paddy/Desktop/AiCore/facebook_ml/Images', transform=None):
+products_df = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
+image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
+batch_size = 32
+
+class ImagesLoader(torch.utils.data.Dataset):
+
+    def __init__(self, transform: transforms = None, labels_level : int=0):
         
         """
-        The function takes in a json file, a root directory and a transform function. It then reads the
-        json file and assigns it to a variable called read_json. It then assigns the root directory to a
-        variable called root_dir. It then assigns the transform function to a variable called transform.
-        It then asserts that the length of the first element of the json file is equal to the length of
-        the second element of the json file.
+        The function takes in a dataframe of products, a folder of images, a transform, a labels_level
+        (which is the level of the category tree you want to use), and a max_desc_len (which is the
+        maximum length of the description you want to use). 
         
-        :param json_file: The path to the json file that contains the image names and labels, defaults
-        to /Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/image_data.json (optional)
-        :param root_dir: The directory where the images are stored, defaults to
-        /Users/paddy/Desktop/AiCore/facebook_ml/Images (optional)
-        :param transform: This is the transformation that we want to apply to the image
+        The function then creates a list of labels, a list of descriptions, a list of image_ids, and a
+        number of classes. 
+        
+        It then creates an encoder and decoder for the labels. 
+        
+        It then creates a transform if one is not provided. 
+        
+        It then creates a tokenizer and a vocabulary.
+        
+        :param transform: This is the transformation that will be applied to the image
+        :type transform: transforms
+        :param labels_level: This is the level of the labels you want to use. For example, if you want
+        to use the top level labels, you would set this to 0. If you want to use the second level
+        labels, you would set this to 1, defaults to 0
+        :type labels_level: int (optional)
+        :param max_desc_len: The maximum length of the description. If the description is longer than
+        this, it will be truncated, defaults to 50 (optional)
         """
-        self.read_json = pd.read_json(json_file)
-        self.root_dir = root_dir
+        self.products = pd.read_csv(products_df, lineterminator='\n')
+        self.root_dir = image_folder
         self.transform = transform
-        assert len(json_file[0]) == len(json_file[1])
+        self.products['category'] = self.products['category'].apply(lambda x: self.get_category(x, labels_level))
+        self.image_id = self.products['image_id']
+        self.labels = self.products['category'].to_list()
+        self.num_classes = len(set(self.labels))
+
+
+        self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
+        self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
+
+       
+        
+
+        if transform == None:
+            self.transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(p=0.3),
+                transforms.RandomHorizontalFlip(),
+                transforms.CenterCrop(128),
+                transforms.Resize(128),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225])
+                ])
+
+
+        # self.tokenizer = get_tokenizer('basic_english')
+        assert len(self.labels) == len(self.image_id)
+    
+
 
 
     def __len__(self):
         """
-        The function returns the length of the read_json variable
-        :return: The length of the read_json file.
+        The function returns the length of the products list
+        :return: The length of the products list.
         """
-        return len(self.read_json)
+        return len(self.products)
 
 
     def __getitem__(self, index):
         """
-        The function takes in an index, and returns a tuple of the image and the label
+        The function takes in an index, and returns the image, description, and label of the product at
+        that index
         
         :param index: the index of the image in the dataset
-        :return: The image and the label
+        :return: The image, the description, and the label.
         """
+        label = self.labels[index]
+        label = self.encoder[label]
+        label = torch.as_tensor(label)
+        image = Image.open(self.root_dir + (self.products.iloc[index, 1] + '.jpg')).convert('RGB')
+        image = self.transform(image)
 
-        img_path = os.path.join(self.root_dir, self.read_json.iloc[index, 0])
-        features = io.imread(f'{img_path}.jpg')
-        features = torch.tensor(features).float()
-        features = features.reshape(3, 128, 128)
-        labels = torch.tensor(self.read_json.iloc[index, 1])
-        features = features/255
-        if self.transform:
-            features = self.transform(features)
-
-        return (features, labels)
-
-        
-
-transform = transforms.Compose([
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-        
-    ),
-    transforms.RandomHorizontalFlip(),
-
-])
+        return image, label
 
 
 
+    @staticmethod
+    def get_category(x, level: int = 0):
+        return x.split('/')[level].strip()
 
-dataset = ImagesLoader(transform=transform)
+
+
+dataset = ImagesLoader()
 
 train_split = 0.7
 validation_split = 0.15
@@ -111,13 +147,14 @@ test_samples = DataLoader(test_data, batch_size=batch_size)
 
 
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, decoder: dict = None):
         """
         We're taking the pretrained ResNet50 model, freezing the first 47 layers, and then adding a few
         more layers to the end of the model
         """
         super(CNN, self).__init__()
         self.features = models.resnet50(pretrained=True).to(device)
+        self.decoder = decoder
         for i, param in enumerate(self.features.parameters()):
             if i < 47:
                 param.requires_grad=False
@@ -205,6 +242,7 @@ def train_model(model, epochs):
                 # writer.add_scalar('Loss', loss, epoch)
                 # writer.add_scalar('Accuracy', acc, epoch)
                 if i % 10 == 9:
+                    break
                     if phase == train_samples:
                       writer.add_scalar('Training Loss', loss, epoch)
                       writer.add_scalar(' Training Accuracy', acc, epoch)
@@ -219,7 +257,7 @@ def train_model(model, epochs):
                     writer.flush()
             
 
-train_model(model, 50)
+# train_model(model, 1)
 
 
 def check_accuracy(loader, model):
@@ -255,14 +293,17 @@ def check_accuracy(loader, model):
 
 
 
-check_accuracy(train_samples, model)
-check_accuracy(val_samples, model)
+# check_accuracy(train_samples, model)
+# check_accuracy(val_samples, model)
 
 
-
-model_save_name = 'cnn.pt'
-path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
-torch.save(model.state_dict(), path)
+if '__name__" == __main__':
+    train_model(model, 1)
+    model_save_name = 'image_cnn.pt'
+    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
+    torch.save(model.state_dict(), path)
+    with open('image_decoder.pkl', 'wb') as f:
+            pickle.dump(dataset.decoder, f)
 
 
 
@@ -311,9 +352,9 @@ class ImageProcessor:
 
 
 
-image_test = ImageProcessor()
-var = image_test(Image.open('/Users/paddy/Desktop/AiCore/facebook_ml/Images/0a1baaa8-4556-4e07-a486-599c05cce76c.jpg'))
-print(var.shape)
+# image_test = ImageProcessor()
+# var = image_test(Image.open('/Users/paddy/Desktop/AiCore/facebook_ml/Images/0a1baaa8-4556-4e07-a486-599c05cce76c.jpg'))
+# print(var.shape)
 
 
 

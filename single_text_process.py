@@ -193,7 +193,7 @@ class TextProcessor(Dataset):
         with torch.no_grad():
             description = self.model(**encoded).last_hidden_state.swapaxes(1,2)
         
-        description = description.squeeze(0)
+        # description = description.unsqueeze(0)
 
         return description
     '''
@@ -207,6 +207,6 @@ if __name__ == '__main__':
     text_test = TextProcessor()
     var = text_test('big ole shelf sdc frvdf erfsdc efvsdc qdfergv')
     print(var)
-    print(var.size)
+    print(var.shape)
 
     # %%
