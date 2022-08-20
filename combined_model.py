@@ -251,7 +251,7 @@ def check_accuracy(loader, model):
         pickle.dump(dataset.decoder, f)
                     
 if __name__ == '__main__':
-    train_model(model, 7)
+    train_model(model, 20)
 
     model_save_name = 'combined.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 

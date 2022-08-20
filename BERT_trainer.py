@@ -205,24 +205,23 @@ def train_model(model, epochs):
                 loss.backward()
                 optimiser.step()
                 optimiser.zero_grad()
-                if i % 10 == 9:
-                    break
-                    # print(f'Epoch {epoch + 1}/{epochs}')
-                    # print('-' * 10)
-                    # if phase == train_samples:
-                    #     writer.add_scalar('Training Loss', loss, epoch)
-                    #     writer.add_scalar(' Training Accuracy', acc, epoch)
-                    #     print('training_loss')
-                    #     print(f'Loss: {loss:.4f} Acc: {acc*100:.1f}%')
-                    #     print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
-                    # else:
-                    #     writer.add_scalar('Validation Loss', loss, epoch)
-                    #     writer.add_scalar('Validation Accuracy', acc, epoch)
-                    #     print('val_loss') 
-                    #     # print(batch) # print every 30 mini-batches
-                    #     print(f'Loss: {loss:.4f} Acc: {acc*100:.1f}%')
-                    #     print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
-                    #     writer.flush()
+                if i % 130 == 129:
+                    print(f'Epoch {epoch + 1}/{epochs}')
+                    print('-' * 10)
+                    if phase == train_samples:
+                        writer.add_scalar('Training Loss', loss, epoch)
+                        writer.add_scalar(' Training Accuracy', acc, epoch)
+                        print('training_loss')
+                        print(f'Loss: {loss:.4f} Acc: {acc*100:.1f}%')
+                        print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
+                    else:
+                        writer.add_scalar('Validation Loss', loss, epoch)
+                        writer.add_scalar('Validation Accuracy', acc, epoch)
+                        print('val_loss') 
+                        # print(batch) # print every 30 mini-batches
+                        print(f'Loss: {loss:.4f} Acc: {acc*100:.1f}%')
+                        print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
+                        writer.flush()
                 
 
     """
@@ -285,17 +284,17 @@ if '__name__" == __main__':
     # n_classes = n_classes = len(text_decoder)
     cnn = CNN()
     print("Model's state_dict:")
-    for param_tensor in cnn.state_dict():
-        print(param_tensor, "\t", cnn.state_dict()[param_tensor].size())
+    # for param_tensor in cnn.state_dict():
+    #     print(param_tensor, "\t", cnn.state_dict()[param_tensor].size())
     print(dataset[0])
-    train_model(cnn, 1)
+    train_model(cnn, 10)
     model_save_name = 'text_cnn.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(cnn.state_dict(), path)
     with open('text_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
-    # check_accuracy(train_samples, cnn)
-    # check_accuracy(val_samples, cnn)
+    check_accuracy(train_samples, cnn)
+    check_accuracy(val_samples, cnn)
 
 
 

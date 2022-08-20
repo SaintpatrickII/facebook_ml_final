@@ -242,7 +242,6 @@ def train_model(model, epochs):
                 # writer.add_scalar('Loss', loss, epoch)
                 # writer.add_scalar('Accuracy', acc, epoch)
                 if i % 10 == 9:
-                    break
                     if phase == train_samples:
                       writer.add_scalar('Training Loss', loss, epoch)
                       writer.add_scalar(' Training Accuracy', acc, epoch)
@@ -298,7 +297,7 @@ def check_accuracy(loader, model):
 
 
 if '__name__" == __main__':
-    train_model(model, 1)
+    train_model(model, 10)
     model_save_name = 'image_cnn.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(model.state_dict(), path)
