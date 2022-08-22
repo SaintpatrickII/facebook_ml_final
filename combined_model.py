@@ -31,31 +31,7 @@ products_df = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_fi
 image_folder = '/Users/paddy/Desktop/AiCore/facebook_ml/images_for_combined/'
 
 
-# validation_split = 0.15
-# batch_size = 32
-# shuffle_dataset = True
-# random_seed = 42
-
-# dataset = ImageTextDataloader(Image_dir=image_folder, csv_file=products_df, transform=None)
-# dataset_size = len(dataset)
-# print(dataset[4000])
-# # print(dataset_size)
-# indices = list(range(dataset_size))
-# split = int(np.floor(validation_split * dataset_size))
-# if shuffle_dataset :
-#     np.random.seed(random_seed)
-#     np.random.shuffle(indices)
-# train_indices, val_indices = indices[split:], indices[:split]
-
-# # Creating PT data samplers and loaders:
-# train_sampler = SubsetRandomSampler(train_indices)
-# valid_sampler = SubsetRandomSampler(val_indices)
-
-# train_samples = torch.utils.data.DataLoader(ImageTextDataloader, batch_size=batch_size, 
-#                                            sampler=train_sampler)
-# val_samples = torch.utils.data.DataLoader(ImageTextDataloader, batch_size=batch_size,
-#                                                 sampler=valid_sampler)
-
+#
 
 # %%
 
@@ -130,8 +106,6 @@ class ImageTextClassifier(nn.Module):
             torch.nn.Linear(1024, 512),
             torch.nn.ReLU(),
             torch.nn.Linear(512, 128)
-            # torch.nn.ReLU(),
-            # torch.nn.Linear((128), 13)
             )
 
 
@@ -158,7 +132,7 @@ model.to(device)
 
 dataset = ImageTextDataloader()
 dataloader = dataloader = torch.utils.data.DataLoader(dataset, batch_size=32 ,shuffle=True, num_workers=1)
-# print(dataset[5000])
+
 
 
 
@@ -170,11 +144,10 @@ def train_model(model, epochs):
     :param model: the model we want to train
     :param epochs: number of epochs to train for
     """
-# optimiser):
-# scheduler
+
+
     writer = SummaryWriter()
     print('training model')
-    # dataset_ite = tqdm(enumerate(dataloader))
     optimiser = optim.SGD(model.parameters(), lr=0.01)
     for epoch in range(epochs):
         print(f'Epoch {epoch + 1}/{epochs}')
@@ -201,7 +174,6 @@ def train_model(model, epochs):
 
 
             if i % 130 == 129:
-                break
                 writer.add_scalar('Training Loss', loss, epoch)
                 writer.add_scalar(' Training Accuracy', acc, epoch)
                 print('training_loss')
@@ -244,31 +216,14 @@ def check_accuracy(loader, model):
         print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
         
 
-
-    model_save_name = 'combined_final.pt'
-    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
-    torch.save(model.state_dict(), path)
-    with open('combined_decoder_final.pkl', 'wb') as f:
-        pickle.dump(dataset.decoder, f)
-                    
 if __name__ == '__main__':
     train_model(model, 10)
-
     model_save_name = 'combined.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
     torch.save(model.state_dict(), path)
     with open('combined_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
-
     check_accuracy(dataloader, model)
-                    
-# if __name__ == '__main__':
-#     train_model(model, 10)
-#     # optimiser_ft)
-#     check_accuracy(dataloader, model)
-#     # model_save_name = 'combined.pt'
-#     # path = f"/Users/paddy/Desktop/AiCore/facebook_ml/{model_save_name}" 
-
 # %%
 
 
