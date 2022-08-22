@@ -201,6 +201,7 @@ def train_model(model, epochs):
 
 
             if i % 130 == 129:
+                break
                 writer.add_scalar('Training Loss', loss, epoch)
                 writer.add_scalar(' Training Accuracy', acc, epoch)
                 print('training_loss')
@@ -251,7 +252,7 @@ def check_accuracy(loader, model):
         pickle.dump(dataset.decoder, f)
                     
 if __name__ == '__main__':
-    train_model(model, 20)
+    train_model(model, 10)
 
     model_save_name = 'combined.pt'
     path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
