@@ -43,11 +43,37 @@ class productsPreProcessing(Dataset):
         self.num_classes = len(set(self.labels))
         self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
         self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
+
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
         self.model.eval()
         self.max_length = max_length
         
+
+        """
+        This function takes in a dataframe of products, and returns a list of labels and a list of
+        descriptions. 
+        The labels are the categories of the products, and the descriptions are the product
+        descriptions. 
+        The function also creates a dictionary that maps the labels to integers, and another dictionary
+        that maps the integers to labels. 
+
+        - creates a tokenizer that will be used to tokenize the product descriptions. 
+        - creates a BERT model that will be used to encode the product descriptions. 
+        - sets the maximum length of the product descriptions. 
+        - sets the number of classes, which is the number of unique labels. 
+        - sets the labels_level, which is the level of the labels. 
+        - sets the max_length, which is the maximum length of the product descriptions. 
+        - sets the dataframe
+
+
+        :param labels_level: This is the level of the category you want to use. For example, if you want
+        to use the category "Clothing, Shoes & Jewelry", you would set this to 0. If you want to use the
+        category "Women", you would set this to 1, defaults to 0
+        :type labels_level: int (optional)
+        :param max_length: The maximum length of the input sequence, defaults to 100
+        :type max_length: int (optional)
+        """
         
     
 
@@ -56,9 +82,23 @@ class productsPreProcessing(Dataset):
     def get_category(x, level: int = 0):
         return x.split('/')[level].strip()
 
+    """
+    It takes a string, splits it on the forward slash character, and returns the item at the
+    specified index
+    
+    :param x: the string to be split
+    :param level: The level of the category to return. For example, if the category is
+    "Books/Non-Fiction/Science", then level 0 is "Books", level 1 is "Non-Fiction", and level 2 is
+    "Science", defaults to 0
+    :type level: int (optional)
+    :return: The category of the product.
+    """
+
+
+
+
     def __len__(self):
         return len(self.descriptions)
-
 
     '''
     __len__:
@@ -80,24 +120,14 @@ class productsPreProcessing(Dataset):
         description = description.squeeze(0)
 
         return description, label
+
+
     '''
     __getitem__:
     
     overwrites __getitem__ magic method, required to be able to index items in the dataset
     '''
 
-# if __name__ == '__main__':
-
-#     dataset = productsPreProcessing()
-#     print(dataset[0], dataset[1][1])
-#     dataloader = torch.utils.data.DataLoader(dataset, batch_size=32,
-#                                              shuffle=True, num_workers=1)
-#     for i, (data, labels) in enumerate(dataloader):
-#         print(data)
-#         print(labels)
-#         print(data.size())
-#         if i == 0:
-#             break
 
 # %%
 
@@ -126,6 +156,21 @@ class CNN(torch.nn.Module):
                                     nn.ReLU(),
                                     nn.Linear(128, num_classes))
         self.decoder = decoder
+    
+
+    """
+        The function takes in an input size, number of classes, and a decoder dictionary. It then
+        creates a sequential model.
+        
+        :param input_size: The size of the input to the model. This is the size of the output of the
+        BERT model, defaults to 768
+        :type input_size: int (optional)
+        :param num_classes: number of classes in the dataset, defaults to 13
+        :type num_classes: int (optional)
+        :param decoder: dict = None
+        :type decoder: dict
+        """
+    
     def forward(self, inp):
         x = self.main(inp)
         return x
@@ -139,13 +184,9 @@ class CNN(torch.nn.Module):
     :param X: the input data
     :return: The output of the last layer of the network.
     """
-# current_vocab_length = productsPreProcessing.get_vocab_length()
-
-    # embedding=dataset_embedding)
-    # vocab_length=len(current_vocab_length))
 
 
-
+# sets dataloader variables
 validation_split = 0.15
 batch_size =32
 shuffle_dataset = True
@@ -160,6 +201,7 @@ if shuffle_dataset :
     np.random.shuffle(indices)
 train_indices, val_indices = indices[split:], indices[:split]
 
+
 # Creating PT data samplers and loaders:
 train_sampler = SubsetRandomSampler(train_indices)
 valid_sampler = SubsetRandomSampler(val_indices)
@@ -168,11 +210,6 @@ train_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                            sampler=train_sampler, drop_last=True)
 val_samples = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                                 sampler=valid_sampler, drop_last=True)
-'''
-Data Splitter:
-
-takes samples & splits into sample sets, using dataloader to tokenize etc
-'''
 
 def train_model(model, epochs):
     writer = SummaryWriter()
@@ -187,14 +224,12 @@ def train_model(model, epochs):
             else:
                 model.eval()
                 print('val')
+
             for i, (features, labels) in tqdm(enumerate(phase)):
                 if phase == 'train':
                     torch.set_grad_enabled(phase)
                 num_correct = 0
                 num_samples = 0
-                # print('this is features:', features.shape)
-                # print('this is labels:', labels.shape) 
-                # print(features)
                 predict = model(features)
                 labels = labels
                 loss = F.cross_entropy(predict, labels)
@@ -205,6 +240,7 @@ def train_model(model, epochs):
                 loss.backward()
                 optimiser.step()
                 optimiser.zero_grad()
+
                 if i % 130 == 129:
                     print(f'Epoch {epoch + 1}/{epochs}')
                     print('-' * 10)
@@ -218,7 +254,6 @@ def train_model(model, epochs):
                         writer.add_scalar('Validation Loss', loss, epoch)
                         writer.add_scalar('Validation Accuracy', acc, epoch)
                         print('val_loss') 
-                        # print(batch) # print every 30 mini-batches
                         print(f'Loss: {loss:.4f} Acc: {acc*100:.1f}%')
                         print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
                         writer.flush()
@@ -237,8 +272,6 @@ def train_model(model, epochs):
     :param epochs: number of times to iterate over the entire dataset
     """
 
-# train_model(cnn, 20)
-
 
 def check_accuracy(loader, model):
     model.eval()
@@ -248,11 +281,8 @@ def check_accuracy(loader, model):
         print('Checking accuracy on evaluation set')
     num_correct = 0
     num_samples = 0
-    #   tells model not to compute gradients
     with torch.no_grad():
         for feature, label in loader:
-            # feature = feature.to(device)  # move to device
-            # label = label.to(device)
             scores = model(feature)
             _, preds = scores.max(1)
             num_correct += (preds == label).sum()
@@ -265,6 +295,8 @@ def check_accuracy(loader, model):
     torch.save(model.state_dict(), path)
     with open('text_decoder.pkl', 'wb') as f:
         pickle.dump(dataset.decoder, f)
+   
+   
     """
     check accuracy:
 
@@ -274,18 +306,8 @@ def check_accuracy(loader, model):
     :param model: A PyTorch Module giving the model to train
     """
 
-
-# check_accuracy(train_samples, cnn)
-# check_accuracy(val_samples, cnn)
-
-
 if '__name__" == __main__':
-    
-    # n_classes = n_classes = len(text_decoder)
     cnn = CNN()
-    print("Model's state_dict:")
-    # for param_tensor in cnn.state_dict():
-    #     print(param_tensor, "\t", cnn.state_dict()[param_tensor].size())
     print(dataset[0])
     train_model(cnn, 10)
     model_save_name = 'text_cnn.pt'
