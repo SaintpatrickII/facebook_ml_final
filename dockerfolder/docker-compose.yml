@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  api-service:
+    build: .
+    volumes:
+      - ./
+    ports:
+      - 8080:8080
+    restart: always
+    network_mode: host
