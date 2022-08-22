@@ -30,7 +30,33 @@ batch_size = 32
 class ImagesLoader(torch.utils.data.Dataset):
 
     def __init__(self, transform: transforms = None, labels_level : int=0):
+        self.products = pd.read_csv(products_df, lineterminator='\n')
+        self.root_dir = image_folder
+        self.transform = transform
+        self.products['category'] = self.products['category'].apply(lambda x: self.get_category(x, labels_level))
+        self.image_id = self.products['image_id']
+        self.labels = self.products['category'].to_list()
+        self.num_classes = len(set(self.labels))
+
+
+        self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
+        self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
+
         
+
+        if transform == None:
+            self.transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(p=0.3),
+                transforms.RandomHorizontalFlip(),
+                transforms.CenterCrop(128),
+                transforms.Resize(128),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225])
+                ])
+        assert len(self.labels) == len(self.image_id)
+    
         """
         The function takes in a dataframe of products, a folder of images, a transform, a labels_level
         (which is the level of the category tree you want to use), and a max_desc_len (which is the
@@ -54,46 +80,17 @@ class ImagesLoader(torch.utils.data.Dataset):
         :param max_desc_len: The maximum length of the description. If the description is longer than
         this, it will be truncated, defaults to 50 (optional)
         """
-        self.products = pd.read_csv(products_df, lineterminator='\n')
-        self.root_dir = image_folder
-        self.transform = transform
-        self.products['category'] = self.products['category'].apply(lambda x: self.get_category(x, labels_level))
-        self.image_id = self.products['image_id']
-        self.labels = self.products['category'].to_list()
-        self.num_classes = len(set(self.labels))
-
-
-        self.encoder = {y: x for (x, y) in enumerate(set(self.labels))}
-        self.decoder = {x: y for (x, y) in enumerate(set(self.labels))}
-
-       
         
-
-        if transform == None:
-            self.transform = transforms.Compose([
-                transforms.RandomHorizontalFlip(p=0.3),
-                transforms.RandomHorizontalFlip(),
-                transforms.CenterCrop(128),
-                transforms.Resize(128),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225])
-                ])
-
-
-        # self.tokenizer = get_tokenizer('basic_english')
-        assert len(self.labels) == len(self.image_id)
-    
 
 
 
     def __len__(self):
+        return len(self.products)
+
         """
         The function returns the length of the products list
         :return: The length of the products list.
         """
-        return len(self.products)
 
 
     def __getitem__(self, index):
@@ -223,6 +220,7 @@ def train_model(model, epochs):
                 print('training')
             else:
                 print('val')
+                
             for i, (features, labels) in enumerate(phase):
                 num_correct = 0
                 num_samples = 0
@@ -239,8 +237,7 @@ def train_model(model, epochs):
                 loss.backward()
                 optimiser.step()
                 optimiser.zero_grad()
-                # writer.add_scalar('Loss', loss, epoch)
-                # writer.add_scalar('Accuracy', acc, epoch)
+
                 if i % 10 == 9:
                     if phase == train_samples:
                       writer.add_scalar('Training Loss', loss, epoch)
@@ -254,9 +251,6 @@ def train_model(model, epochs):
                     print(f'[{epoch + 1}, {i + 1:5d}] loss: {loss}')
                     print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
                     writer.flush()
-            
-
-# train_model(model, 1)
 
 
 def check_accuracy(loader, model):
@@ -269,14 +263,11 @@ def check_accuracy(loader, model):
     """
     model.eval()
     if loader == train_samples:
-        # model.train()
         print('Checking accuracy on training set')
     else:
         print('Checking accuracy on evaluation set')
-        # model.eval()
     num_correct = 0
     num_samples = 0
-    #   tells model not to compute gradients
     with torch.no_grad():
         for feature, label in loader:
             feature = feature.to(device)  # move to device
@@ -296,12 +287,6 @@ def check_accuracy(loader, model):
             pickle.dump(dataset.decoder, f)
         
 
-
-
-# check_accuracy(train_samples, model)
-# check_accuracy(val_samples, model)
-
-
 if '__name__" == __main__':
     train_model(model, 10)
     model_save_name = 'image_cnn.pt'
@@ -309,6 +294,8 @@ if '__name__" == __main__':
     torch.save(model.state_dict(), path)
     with open('image_decoder.pkl', 'wb') as f:
             pickle.dump(dataset.decoder, f)
+    check_accuracy(train_samples, model)
+    check_accuracy(val_samples, model)
 
 
 
