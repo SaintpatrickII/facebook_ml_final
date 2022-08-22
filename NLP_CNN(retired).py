@@ -105,24 +105,6 @@ class productsPreProcessing(Dataset):
     :return: A list of tokenized descriptions
     """
 
-    # def create_embeddings(self, descriptions):
-    #     def embedding( description):
-    #         embedding_size = 100
-    #         vocab_length = len(description)
-    #         lookup_tensors = {y: x for (x, y) in enumerate(set(description))}
-    #         # vocab_length = len(description)
-    #         # print(lookup_tensors)
-    #         # print(vocab_length)
-    #         embedding = torch.nn.Embedding(vocab_length, embedding_size)
-    #         words = lookup_tensors.values()
-    #         lookup_tensor = torch.tensor(words, dtype=torch.long)
-                
-    #         # print(vocab_length)
-    #         # print(embedding_size)
-    #         embedded_desc = embedding(lookup_tensor)
-    #         # print(embedding([0][1]))
-    #         return embedded_desc
-
 
     @staticmethod
     def get_category(x, level: int = 0):

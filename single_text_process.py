@@ -161,6 +161,21 @@ df.head
 
 class TextProcessor(Dataset):
     def __init__(self, labels_level: int = 0, max_length: int= 100):
+       
+        """
+        The function takes in two arguments, labels_level and max_length. It then initializes the
+        tokenizer and model from the pretrained BERT model. The model is set to eval mode and the
+        max_length is set to the max_length argument
+        
+        :param labels_level: The level of the labels to be used. 0 is the most granular level, and 2 is
+        the least granular, defaults to 0
+        :type labels_level: int (optional)
+        :param max_length: The maximum length of the input sequence. If the input sequence is longer
+        than this, it will be truncated, defaults to 100
+        :type max_length: int (optional)
+        """
+
+
         super().__init__()
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
@@ -173,9 +188,25 @@ class TextProcessor(Dataset):
    
     @staticmethod
     def get_category(x, level: int = 0):
+        
+        """
+        It takes a string, splits it on the forward slash character, and returns the item at the
+        specified index
+        
+        :param x: the string to be split
+        :param level: The level of the category to return. For example, if the category is
+        "Books/Non-Fiction/Science", then level 0 is "Books", level 1 is "Non-Fiction", and level 2 is
+        "Science", defaults to 0
+        :type level: int (optional)
+        :return: The category of the product.
+        """
+
         return x.split('/')[level].strip()
 
     def __len__(self):
+        '''
+        returns length of input description array
+        '''
         return len(self.descriptions)
 
 
@@ -192,15 +223,14 @@ class TextProcessor(Dataset):
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
         with torch.no_grad():
             description = self.model(**encoded).last_hidden_state.swapaxes(1,2)
-        
-        # description = description.unsqueeze(0)
-
         return description
-    '''
-    __getitem__:
+
+    """
+    We take a sentence, encode it using the tokenizer, and then pass it through the model
     
-    overwrites __getitem__ magic method, required to be able to index items in the dataset
-    '''
+    :param text: the text to be encoded
+    :return: The last hidden state of the model.
+    """
 
 
 if __name__ == '__main__':
