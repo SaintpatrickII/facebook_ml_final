@@ -4,7 +4,7 @@ services:
   api-service:
     build: .
     volumes:
-      - ./
+      - ~/app:/app
     ports:
       - 8080:8080
     restart: always
