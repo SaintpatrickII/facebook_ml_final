@@ -287,7 +287,13 @@ def check_accuracy(loader, model):
             num_samples += preds.size(0)
         acc = float(num_correct) / num_samples
         print(f'Got {num_correct} / {num_samples} with accuracy: {acc * 100}%')
-      
+
+        
+    model_save_name = 'image_cnn.pt'
+    path = f"/Users/paddy/Desktop/AiCore/facebook_ml_final/{model_save_name}" 
+    torch.save(model.state_dict(), path)
+    with open('image_decoder.pkl', 'wb') as f:
+            pickle.dump(dataset.decoder, f)
         
 
 
