@@ -139,8 +139,9 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 - Model is trained & state.dict is saved alongside the decoder to be used later within our API
 
-- From images below it is clear that by combining models we get an increased rate of learning within the model
+- For the combined mdel, there is a rather large lag before it catches up to that of the other two models as the model is learning off the entire dataset, however within the 10 epochs benchmark given to compare models it hasent reached similar accuracy however doubling the training duration should lead to far greater results ( this took all weekend to train already :). )
 
+<img width="1456" alt="Screenshot 2022-08-22 at 19 29 29" src="https://user-images.githubusercontent.com/92804317/185993688-9540f589-69d6-42bb-b959-fc6cd8a105eb.png">
 
 
 7. Configure & deploy API call for model:
