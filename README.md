@@ -139,16 +139,31 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 - Model is trained & state.dict is saved alongside the decoder to be used later within our API
 
-- From images below it is clear that by combining models we get an increased rate of learning within the model
+- For the combined mdel, there is a rather large lag before it catches up to that of the other two models as the model is learning off the entire dataset, however within the 10 epochs benchmark given to compare models it hasent reached similar accuracy however doubling the training duration should lead to far greater results ( this took all weekend to train already :). )
 
+<img width="1456" alt="Screenshot 2022-08-22 at 19 29 29" src="https://user-images.githubusercontent.com/92804317/185993688-9540f589-69d6-42bb-b959-fc6cd8a105eb.png">
 
 
 7. Configure & deploy API call for model:
 
 - API is setup utilising FastAPI, firstly on localhost for ease of testing a .post method is setup using uvicorn to update the localhost whenever the api.py file is ran
 
-- Two external dataloaders are needed as now we will be feeding the model a singular image & text input, so modified loaders are used to account for this instead of the batches previously used, for images we need to add a dimension for the 'batch size' & thetext now only tokenizes a single description rather than a list of descriptions
+- Two external dataloaders are needed as now we will be feeding the model a singular image & text input, so modified loaders are used to account for this instead of the batches previously used, for images we need to add a dimension for the 'batch size' & the text now only tokenizes a single description rather than a list of descriptions
 
-- Combined model is imported & the forward method is called by the API .post method, this will ask for user input of image & text & load->predict said imputs. a JSONResponse is used to give an output of predictions 
+- Text, Image & Combined model is imported & the forward method is called by the API .post method, this will ask for user input of image & text & load -> predict said imputs. a JSONResponse is used to give an output of predictions
+
+- now that this is functional the last step is to host this on the cloud
+
+8. EC2 migration & Docker:
+
+- Before we migrate our api & relevant files to be uploaded to an ec2 a dockerfolder is created to contain all neccasary files to use the api, alongside this a seperate requirements.txt file is created specifically for this folder. 
+
+- Alongside this a docker-compose.yml file is created, this allows for updates of files contained here to update in real time int the docker image and also a dockerfile script which gives commands on how to build the image for our api.
+
+- This dockerfolder is now build using 'docker build tag patrickgovus/ml_api' & pushed to dockerhub via 'docker push patrickgovus/ml_api'
+
+- As the model .pt files are all over 1gb in size we will have to use a instance larger than the traditional free tier, once this is created we can either just clone the repo (boring) ir just get the correct api files by pulling the docker image we just made, within VSCode you can directly ssh intto a instance with extensions so thats exactly what we will do
+
+
 
 
