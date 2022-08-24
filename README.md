@@ -10,23 +10,23 @@ Before starting any form of EDA it is important to examine the datasets & clean 
 
 Advertisement Dataset:
 
-- Data is loaded in from the S3 bucket into a jupyter notebook (this allows for rapid troubleshooting, once all cleaning has been completed this can be transferred into a python method), pandas was used to turn the dataset into a dataframe.
+- Data is loaded & analysed using pandas, main things in looking at the data is identifying potential features, redundant columns & NaN values, alongside making sure both files match in terms of column meanings
 
 - Before any cleaning it is a good idea to have a look at the raw file to see any obvious improvements. a combination of this & the use of the pandas df.dtype and df.head gives us a good indication of the next steps to be taken to clean this file.
 
 Cleaning operations:
 
-1. by looking at the datatypes of our rows most are object, in order to save hastle we convert these to str type, this will later allow us to manipulate them later on
+- by looking at the datatypes of our rows most are object, in order to save hastle we convert these to str type, this will later allow us to manipulate them
 
-2. from looking at the csv file some non-ascii characters have been used in two of the columns (product description & product name), for this we use a simple encode/decode function to rid the df of these
+- from looking at the csv file some non-ascii characters have been used in two of the columns (product description & product name), for this we use a simple encode/decode function to append these
 
-3. our df has a inbuilt index column & a meaningless additional index column, this is dropped from the table, whilst dropping this column i also chose to drop columns with nan data inputs, this meaning our new df will have inputs for each value
+- our df has a inbuilt index column & a meaningless additional index column, this is dropped from the table, whilst dropping this column i also chose to drop columns with NaN data inputs, this meaning our new df will have inputs for each value
 
-4. the price function contains a '£' symbol in each price, to make these values into floats we simply use a str replace & convert the results into float64 datatype
+- the price function contains a '£' symbol in each price, to make these values into floats we simply use a str replace & convert the results into float64 datatype
 
-5. product_name includes the location of the item in the header, this information is already known in the location column so we use a str split & index the zeroth element so that product name is only the product
+- product_name includes the location of the item in the header, this information is already known in the location column so we use a str split & index the zeroth element so that product name is only the product
 
-6. category & location both contain two pieces of information, here i have split the category into an additional subcaregory column & with location it is split into county & the original location
+- category & location both contain two pieces of information, here i have split the category into an additional subcaregory column & with location it is split into county & the original location
 
 
 Images Dataset:
@@ -35,13 +35,13 @@ raw images come in a variety of sizes & aspect ratios, in order to train the mac
 
 Cleaning Operations:
 
-1. Images are formed in a for loop with an enumerate function(this makes for easy naming of the photos).
+- Images are formed in a for loop with an enumerate function(this makes for easy naming of the photos).
 
-2. Firstly our loop opens the image & created a black background at the specified limit of 512 x 512 pixels to be overlayed later.
+- Firstly our loop opens the image & created a black background at the specified limit of 512 x 512 pixels to be overlayed later.
 
-2. the maximum dimension of each image is found & compared to our maximum acceptable size, this is computed into a ratio factor which will transform the image to the correct size.
+- the maximum dimension of each image is found & compared to our maximum acceptable size, this is computed into a ratio factor which will transform the image to the correct size.
 
-3. Background image is overlayed with the product image, image is centred on this background & saved with the enumerate function from before
+- Background image is overlayed with the product image, image is centred on this background & saved with the enumerate function from before
 
 3. Creating Simple Machine Learning Models:
 
@@ -65,11 +65,11 @@ Image Multi Class Classification:
 
 - In this form while trainable is not ideal as we lose massive amounts of information on the images that could be used in a model i.e. do pixels that are neighbors have any effect? This will be fixed at a later point using neural networks
 
-- This flattened numpy array is joined to the class number in a tuple for training in sklearn's logistic regression model with X=(no. of labels, no of features) and y = (no of labels)
+- This flattened numpy array is joined to the class number in a tuple for training in sklearn's logistic regression model with X=(value of pixels) and y = (no of labels)
 
 - This model only produces an accuracy of 15% this will be drastically increased with the usage of a CNN
 
-- While making this image dataset i had tried for ages to correctly split the categories & index them into the correct tuples, this can be seen in the image_model_final file, for anyone looking to mimic this, for the love of all things good just use the inbuilt sklearn LabelEncoder.
+- While making this image dataset i had tried for ages to correctly split the categories & index them into the correct tuples, for anyone looking to mimic this, for the love of all things good just use the inbuilt sklearn LabelEncoder.
 
 - My other main pause with this step happened when my categories were completeley unbalanced, as it turns out in my data cleaning when removing duplicate rows i had accidently removed rows which contained different pictures of the same product, always good to double check this next time :)
 
@@ -110,7 +110,7 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 - Once the correct products csv file has been loaded in the dataloader can be made, for this there are two key processes that must be made, firstly a 'get_vocab' method, in this method a list of every word in the dataset is recorded, as we train the model different words will be used from the vocab in an attempt to find relationships betweeen words & categories
 
-- the second key methid is to 'tokenize description' here we transform each word into a torch.tensor, every word will have a unique value assigned to it from the vocab method, doing this will allow for the words to be understood by our model
+- the second key method is to 'tokenize description' here we transform each word into a torch.tensor, every word will have a unique value assigned to it from the vocab method, doing this will allow for the words to be understood by our model
 
 - Dataloader output is a tuple of the torch.tensor of each description & the category of the product as shown below
 
@@ -135,11 +135,15 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 - Alike before a dataloader is utilised which completes. the appropriate transformations to both text & images, in this model however we also add an encoder & decoder to the loader, this will translate the class number to its string category name
 
+- As to cut down significantly with training times for the combined model BERT is utilised to deal with tokenisation instead of manually creating this
+
 - Model architecture stays largely the same with one important change, before the final linear layers == no. of classes, now we wat the final layers of each to both == 128, after combining both models one final linear layer is utilised to equate the final output to the number of classes
 
 - Model is trained & state.dict is saved alongside the decoder to be used later within our API
 
 - For the combined mdel, there is a rather large lag before it catches up to that of the other two models as the model is learning off the entire dataset, however within the 10 epochs benchmark given to compare models it hasent reached similar accuracy however doubling the training duration should lead to far greater results ( this took all weekend to train already :) )
+
+- (Red & Orange lines are Image & Text models, Blue is Combined)
 
 <img width="1456" alt="Screenshot 2022-08-22 at 19 29 29" src="https://user-images.githubusercontent.com/92804317/185993688-9540f589-69d6-42bb-b959-fc6cd8a105eb.png">
 
