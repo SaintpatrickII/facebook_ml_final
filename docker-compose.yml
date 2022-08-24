@@ -5,10 +5,10 @@ services:
     # build: 
     #   context: .
     #   dockerfile: dockerfolder/dockerfile
-    image: patrickgovus/test
+    image: patrickgovus/ml
     volumes:
       - ~/dockerfolder:/app
     ports:
       - 8080:8080
     restart: always
-    network_mode: host
+    
