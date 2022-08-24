@@ -160,10 +160,17 @@ As we saw beforehand using a simpler ML model like a logistic regression is inef
 
 - Alongside this a docker-compose.yml file is created, this allows for updates of files contained here to update in real time int the docker image and also a dockerfile script which gives commands on how to build the image for our api.
 
-- This dockerfolder is now build using 'docker build tag patrickgovus/ml_api' & pushed to dockerhub via 'docker push patrickgovus/ml_api'
+- This dockerfolder is now build using 'docker build tag patrickgovus/test' while in the dockerfolder directory & pushed to dockerhub via 'docker push patrickgovus/ml', to double check once image has been created a simple 'docker images' should now show patrickgovus/ml as an image
 
-- As the model .pt files are all over 1gb in size we will have to use a instance larger than the traditional free tier, once this is created we can either just clone the repo (boring) ir just get the correct api files by pulling the docker image we just made, within VSCode you can directly ssh intto a instance with extensions so thats exactly what we will do
+- To use this image we simply run 'docker run -p 8080:8080 patrickgovus/ml', the -p flag assigns the local 8080 port to the our virtual docker 8080 port
+
+- As this image will be accepting http requests on docker hub this image will be set as a private repo to avoid any unwanted connections
+
+- As the model .pt files are all over 1gb in size we will have to use a instance larger than the traditional free tier, once this is created we can either just clone the repo (boring) or just get the correct api files by pulling the docker image we just made, within VSCode you can directly ssh intto a instance with extensions so thats exactly what we will do
+
+- Once the instance is created it's quickly updated by running 'sudo apt upgrade' & from here we just login to docker followed by 'sudo docker pull patrickgovus/ml' to download the api image from docker
+
+- Alike before we can simply enter 'docker run -p 8080:8080 patrickgovus/ml' & the image will now be run through the ec2 instance, in this case our localhost uses the ip of the instance rather than our localhost of before meaning that anyone can try the application
 
 
-
-
+<img width="895" alt="Screenshot 2022-08-24 at 19 22 18" src="https://user-images.githubusercontent.com/92804317/186494568-2fc90c0b-2f31-4eba-9e77-827c489db71e.png">
