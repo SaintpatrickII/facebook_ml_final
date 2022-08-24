@@ -1,10 +1,11 @@
-version: '3'
+version: '3.4'
 
 services:
   api-service:
-    build: 
-      context: .
-      dockerfile: dockerfolder/dockerfile
+    # build: 
+    #   context: .
+    #   dockerfile: dockerfolder/dockerfile
+    image: patrickgovus/test
     volumes:
       - ~/dockerfolder:/app
     ports:
