@@ -1,22 +1,13 @@
-
-import fastapi
 from fastapi import FastAPI, File
-from fastapi import Request
 from fastapi import UploadFile
 from fastapi import Form
 import uvicorn
 import torch
 import torch.nn as nn 
-import torch.optim as optim
-import torch.nn.functional as F
 from torchvision import models
-import torchvision.transforms as transforms
 from PIL import Image
 from single_image_process import ImageProcessor
 from single_text_process import TextProcessor
-from combined_model import TextClassifier
-# , ImageTextClassifier
-
 from fastapi import FastAPI
 from fastapi import Request
 from fastapi import UploadFile
@@ -36,7 +27,29 @@ image_processor = ImageProcessor()
 text_processor = TextProcessor()
 
 
-
+class TextClassifier(torch.nn.Module):
+    def __init__(self,
+                 input_size: int = 768,
+                 num_classes: int = 13,
+                 decoder: dict = None):
+        super().__init__()
+        self.main = nn.Sequential(nn.Conv1d(input_size, 256, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(256, 128, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(128, 64, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.MaxPool1d(kernel_size=2, stride=2),
+                                    nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1),
+                                    nn.ReLU(),
+                                    nn.Flatten(),
+                                    nn.Linear(384, 128)).to(device)
+        self.decoder = decoder
+    def forward(self, inp):
+        x = self.main(inp)
+        return x
 
 # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 device = 'cpu'

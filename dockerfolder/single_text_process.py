@@ -14,11 +14,6 @@ import pandas as pd
 
 
 
-products = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
-
-df =  pd.read_csv(products)
-df.head
-
 class TextProcessor(Dataset):
     def __init__(self, labels_level: int = 0, max_length: int= 100):
         super().__init__()
