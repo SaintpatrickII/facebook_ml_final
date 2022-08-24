@@ -5,32 +5,13 @@
 
 
 #%%
-from torch.utils.data.sampler import SubsetRandomSampler
+
 import pandas as pd
-import numpy as np
-import torch
-from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator
-from torch.utils.data import DataLoader, Dataset
-import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
-import torch.nn.functional as F
-import pickle
+from torch.utils.data import Dataset
 from transformers import BertTokenizer
 from transformers import BertModel
-from torch.utils.data.sampler import SubsetRandomSampler
 import pandas as pd
-import numpy as np
-import torch
-from torchtext.data.utils import get_tokenizer
-from torchtext.vocab import build_vocab_from_iterator
-from torch.utils.data import DataLoader, Dataset
-import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
-import torch.nn.functional as F
-import pickle
-import torch.nn as nn
-from tqdm import tqdm
+
 
 
 products = '/Users/paddy/Desktop/AiCore/facebook_ml/final_dataset/combined_final_dataset.csv'
